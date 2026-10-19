@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="fms-token" content="__TOKEN__">
+<title>FixMySlop</title>
+<style>
+:root {
+  --bg: #fbfbfa; --panel: #ffffff; --sunken: #f4f4f2; --hover: #efefec; --select: #e9e9e5;
+  --fg: #1d1d1b; --muted: #6e6e69; --faint: #9c9c96; --line: #e5e5e1; --line-strong: #d4d4cf;
+  --crit: #b42318; --high: #c4320a; --med: #a15c07; --low: #4b5563; --info: #9ca3af; --ok: #067647;
+  --mark: #fff4d6;
+  --radius: 8px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111110; --panel: #181817; --sunken: #141413; --hover: #20201f; --select: #262624;
+    --fg: #ededea; --muted: #a1a19b; --faint: #74746e; --line: #272725; --line-strong: #353532;
+    --crit: #f97066; --high: #fb6514; --med: #f5b041; --low: #a3aab5; --info: #6b7280; --ok: #47cd89;
+    --mark: #3a3015;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110; --panel: #181817; --sunken: #141413; --hover: #20201f; --select: #262624;
+  --fg: #ededea; --muted: #a1a19b; --faint: #74746e; --line: #272725; --line-strong: #353532;
+  --crit: #f97066; --high: #fb6514; --med: #f5b041; --low: #a3aab5; --info: #6b7280; --ok: #47cd89;
+  --mark: #3a3015;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; border-radius: 4px; }
+code, .mono { font-family: var(--mono); font-size: 12px; }
+.app { display: grid; grid-template-columns: 208px minmax(0, 1fr); grid-template-rows: 48px minmax(0, 1fr); height: 100vh; }
+header { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.wordmark { font-weight: 650; letter-spacing: -0.01em; margin-right: 8px; }
+.spacer { flex: 1; }
+nav { border-right: 1px solid var(--line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; background: var(--panel); }
+nav button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 10px; border-radius: 6px; color: var(--muted); cursor: pointer; }
+nav button:hover { background: var(--hover); color: var(--fg); }
+nav button[aria-current="page"] { background: var(--select); color: var(--fg); font-weight: 550; }
+nav button .count { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--faint); font-size: 12px; }
+nav .foot { margin-top: auto; padding: 8px 10px; color: var(--faint); font-size: 12px; }
+nav svg, header svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+main { overflow: auto; min-width: 0; }
+.page { max-width: 1120px; margin: 0 auto; padding: 24px 24px 64px; }
+h1 { font-size: 18px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 14px; font-weight: 600; margin: 0 0 12px; }
+h3 { font-size: 13px; font-weight: 600; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; white-space: nowrap; font-weight: 500; }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn.primary:hover { opacity: 0.88; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { background: var(--hover); color: var(--fg); }
+.btn.small { height: 26px; padding: 0 10px; font-size: 12px; }
+.btn[disabled] { opacity: 0.45; cursor: default; }
+.btn kbd { font: 11px var(--mono); color: inherit; opacity: 0.6; }
+.project-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sunken); border-radius: 6px; height: 30px; padding: 0 10px; cursor: pointer; max-width: 40vw; }
+.project-btn:hover { border-color: var(--line-strong); }
+.project-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.card-pad { padding: 16px; }
+.grid { display: grid; gap: 16px; }
+.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.row { display: flex; align-items: center; gap: 12px; }
+.wrap { flex-wrap: wrap; }
+.stack > * + * { margin-top: 16px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; background: var(--panel); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--faint)); flex: none; }
+.sev-CRITICAL { --c: var(--crit); } .sev-HIGH { --c: var(--high); } .sev-MEDIUM { --c: var(--med); } .sev-LOW { --c: var(--low); } .sev-INFO { --c: var(--info); }
+.sev-label { font-size: 11px; font-weight: 650; color: var(--c); }
+/* overview */
+.score { display: flex; align-items: baseline; gap: 10px; }
+.score b { font-size: 48px; line-height: 1; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.grade { font-size: 13px; font-weight: 650; border: 1px solid var(--line-strong); border-radius: 6px; padding: 1px 8px; }
+.delta-good { color: var(--ok); } .delta-bad { color: var(--crit); }
+.steps { counter-reset: step; display: grid; gap: 0; }
+.step { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.step:first-child { border-top: 0; padding-top: 0; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--muted); }
+.step.done .step-num { border-color: var(--ok); color: var(--ok); }
+.bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--sunken); }
+.bar span { background: var(--c); }
+.cat { text-align: left; cursor: pointer; padding: 14px 16px; }
+.cat:hover { border-color: var(--line-strong); }
+.cat b { display: block; font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0 8px; }
+.table { width: 100%; border-collapse: collapse; }
+.table td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: middle; }
+.table tr:first-child td { border-top: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; width: 48px; color: var(--muted); }
+.linklike { border: 0; background: none; padding: 0; cursor: pointer; text-align: left; color: inherit; max-width: 100%; }
+.linklike:hover { text-decoration: underline; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+/* issues */
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.search { height: 30px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 10px; background: var(--panel); min-width: 220px; flex: 1; }
+select.input { height: 30px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 8px; background: var(--panel); }
+.chip { cursor: pointer; }
+.chip[aria-pressed="false"] { color: var(--faint); background: transparent; }
+.chip[aria-pressed="false"] .dot { opacity: 0.35; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.list { max-height: calc(100vh - 170px); overflow: auto; }
+.group-head { position: sticky; top: 0; background: var(--sunken); border-bottom: 1px solid var(--line); padding: 6px 12px; font-size: 12px; display: flex; gap: 8px; align-items: center; z-index: 1; }
+.group-head .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.issue-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 8px 12px; cursor: pointer; }
+.issue-row:hover { background: var(--hover); }
+.issue-row[aria-selected="true"] { background: var(--select); }
+.issue-row .where { font: 11px var(--mono); color: var(--faint); }
+.detail { position: sticky; top: 0; max-height: calc(100vh - 170px); overflow: auto; }
+.detail section + section { margin-top: 16px; }
+.label { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.code { background: var(--sunken); border: 1px solid var(--line); border-radius: 6px; overflow: auto; font: 12px/1.6 var(--mono); }
+.code div { display: grid; grid-template-columns: 44px minmax(0, 1fr); white-space: pre; }
+.code .n { color: var(--faint); text-align: right; padding-right: 12px; user-select: none; }
+.code .hit { background: var(--mark); }
+.empty { text-align: center; padding: 64px 16px; color: var(--muted); }
+.empty h1 { color: var(--fg); margin-bottom: 6px; }
+/* rules */
+.rule { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 16px; border-top: 1px solid var(--line); }
+.rule:first-of-type { border-top: 0; }
+.switch { width: 32px; height: 18px; border-radius: 9px; border: 0; background: var(--line-strong); position: relative; cursor: pointer; margin-top: 1px; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--panel); transition: transform 0.15s; }
+.switch[aria-checked="true"] { background: var(--fg); }
+.switch[aria-checked="true"]::after { transform: translateX(14px); }
+.banner { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--sunken); margin-bottom: 16px; }
+/* setup */
+.integration { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line); }
+.integration:first-of-type { border-top: 0; }
+.installed { color: var(--ok); font-weight: 550; display: inline-flex; gap: 6px; align-items: center; }
+.cmd { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); }
+.cmd:first-of-type { border-top: 0; }
+.cmd code { overflow-x: auto; white-space: nowrap; }
+/* dialog, toast, popover */
+dialog { border: 1px solid var(--line-strong); border-radius: 10px; background: var(--panel); color: var(--fg); padding: 0; width: min(560px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+.dialog-body { padding: 18px; }
+.field { display: flex; gap: 8px; }
+.field input { flex: 1; height: 32px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 10px; background: var(--bg); font-family: var(--mono); font-size: 12px; }
+.error { color: var(--crit); font-size: 12px; margin-top: 6px; }
+.recent { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 6px; cursor: pointer; font: 12px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent:hover { background: var(--hover); color: var(--fg); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 6px; opacity: 0; transition: opacity 0.15s; pointer-events: none; z-index: 20; max-width: calc(100vw - 32px); }
+.toast.show { opacity: 1; }
+.popover { position: absolute; right: 16px; top: 44px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; z-index: 10; width: 260px; }
+.popover label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; cursor: pointer; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--line-strong); border-top-color: var(--fg); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } .toast, .switch::after { transition: none; } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 48px auto minmax(0, 1fr); }
+  nav { flex-direction: row; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; padding: 6px 8px; }
+  nav button { width: auto; }
+  nav .foot { display: none; }
+  .split, .cols-2, .cols-3 { grid-template-columns: 1fr; }
+  .list, .detail { max-height: none; position: static; }
+  .page { padding: 16px 16px 48px; }
+  .project-btn { max-width: 45vw; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="wordmark">FixMySlop</span>
+    <button class="project-btn" id="projectBtn" type="button" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <span id="projectName">Choose a project</span>
+    </button>
+    <div class="spacer"></div>
+    <span id="scanStatus" class="row muted" aria-live="polite"></span>
+    <button class="btn ghost hide-sm" id="optionsBtn" type="button" aria-expanded="false" aria-controls="options">Options</button>
+    <button class="btn primary" id="scanBtn" type="button">Scan <kbd>R</kbd></button>
+    <button class="btn ghost" id="themeBtn" type="button" aria-label="Toggle color theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </header>
+  <div class="popover" id="options" hidden>
+    <label><input type="checkbox" id="optStatic" checked> <span>Python linters<br><span class="faint">Ruff and Bandit, when installed</span></span></label>
+    <label><input type="checkbox" id="optChanged"> <span>Only changed files<br><span class="faint">vs main, plus uncommitted work (git)</span></span></label>
+  </div>
+  <nav aria-label="Sections">
+    <button type="button" data-view="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Overview</button>
+    <button type="button" data-view="issues"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Issues<span class="count" id="navCount"></span></button>
+    <button type="button" data-view="rules"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Rules</button>
+    <button type="button" data-view="setup"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></svg>Setup</button>
+    <div class="foot">v__VERSION__</div>
+  </nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<dialog id="projectDialog" aria-labelledby="projectDialogTitle">
+  <form method="dialog" class="dialog-body" id="projectForm">
+    <h2 id="projectDialogTitle">Open a project</h2>
+    <p class="muted" style="margin-bottom:12px">Paste the path of the folder to scan, e.g. your website's repository.</p>
+    <div class="field">
+      <input id="projectPath" type="text" spellcheck="false" autocomplete="off" aria-label="Project folder path" placeholder="C:\Users\you\my-site  or  ~/code/my-site">
+      <button class="btn primary" type="submit" id="projectOpen">Open</button>
+    </div>
+    <div class="error" id="projectError" role="alert"></div>
+    <div id="recentWrap" style="margin-top:14px" hidden>
+      <div class="label">Recent</div>
+      <div id="recentList"></div>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script id="boot" type="application/json">__BOOT__</script>
+
+<script>
+(() => {
+  "use strict";
+  const TOKEN = document.querySelector('meta[name="fms-token"]').content;
+  const SEVERITIES = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
+  const VIEWS = ["overview", "issues", "rules", "setup"];
+  const state = {
+    view: "overview", project: null, recent: [], report: null, integrations: [], rules: null, baseline: false,
+    scanning: false, selected: null, filters: { q: "", sev: new Set(SEVERITIES), cat: "", group: "file", file: "", rule: "" },
+    rulesDirty: false,
+  };
+  const $ = (id) => document.getElementById(id);
+
+  // ── tiny DOM helper: never uses innerHTML, so scanned code can't inject markup ──
+  function h(tag, props, ...children) {
+    const el = document.createElement(tag);
+    for (const [key, value] of Object.entries(props || {})) {
+      if (value === null || value === undefined || value === false) continue;
+      if (key === "class") el.className = value;
+      else if (key === "text") el.textContent = value;
+      else if (key.startsWith("on")) el.addEventListener(key.slice(2), value);
+      else if (key === "style") el.setAttribute("style", value);
+      else el.setAttribute(key, value === true ? "" : value);
+    }
+    for (const child of children.flat()) {
+      if (child === null || child === undefined || child === false) continue;
+      el.append(child instanceof Node ? child : document.createTextNode(String(child)));
+    }
+    return el;
+  }
+  const svgNS = "http://www.w3.org/2000/svg";
+  function check() {
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "14"); svg.setAttribute("height", "14");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", "M20 6 9 17l-5-5"); path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor"); path.setAttribute("stroke-width", "2.2");
+    svg.append(path);
+    return svg;
+  }
+
+  async function api(path, body) {
+    const res = await fetch(path, {
+      method: body ? "POST" : "GET",
+      headers: { "X-FixMySlop-Token": TOKEN, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+
+  let toastTimer;
+  function toast(message) {
+    const t = $("toast");
+    t.textContent = message;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+  }
+  async function copy(text, message) {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const ta = h("textarea", {}, text);
+      document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove();
+    }
+    toast(message || "Copied");
+  }
+
+  // ── theme ──
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+  }
+  try { applyTheme(localStorage.getItem("fms-theme")); } catch { /* storage unavailable: follow the system */ }
+  $("themeBtn").addEventListener("click", () => {
+    const dark = document.documentElement.dataset.theme === "dark" ||
+      (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    const next = dark ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("fms-theme", next); } catch { /* not persisted */ }
+  });
+
+  // ── project ──
+  function openProjectDialog() {
+    $("projectError").textContent = "";
+    $("projectPath").value = state.project ? state.project.root : "";
+    const list = $("recentList");
+    list.replaceChildren(...state.recent.map((p) => h("button", { class: "recent", type: "button", title: p, onclick: () => chooseProject(p) }, p)));
+    $("recentWrap").hidden = state.recent.length === 0;
+    $("projectDialog").showModal();
+    $("projectPath").focus();
+  }
+  async function chooseProject(path) {
+    try {
+      const data = await api("/api/project", { path });
+      applyState(data);
+      $("projectDialog").close();
+      state.filters.file = ""; state.filters.rule = ""; state.selected = null;
+      await scan();
+    } catch (e) { $("projectError").textContent = e.message; }
+  }
+  $("projectBtn").addEventListener("click", openProjectDialog);
+  $("projectForm").addEventListener("submit", (e) => { e.preventDefault(); chooseProject($("projectPath").value); });
+
+  function applyState(data) {
+    state.project = data.project; state.recent = data.recent || []; state.integrations = data.integrations || [];
+    state.baseline = !!data.baseline;
+    if (data.report !== undefined) state.report = data.report;
+    $("projectName").textContent = state.project ? state.project.name : "Choose a project";
+    $("projectBtn").title = state.project ? state.project.root : "";
+  }
+
+  // ── scanning ──
+  async function scan() {
+    if (!state.project || state.scanning) { if (!state.project) openProjectDialog(); return; }
+    state.scanning = true; renderStatus(); render();
+    try {
+      state.report = await api("/api/scan", { static: $("optStatic").checked, changed: $("optChanged").checked });
+      state.rulesDirty = false;
+      if (state.selected !== null && !state.report.issues[state.selected]) state.selected = null;
+    } catch (e) { toast(`Scan failed: ${e.message}`); }
+    state.scanning = false; renderStatus(); render();
+  }
+  function renderStatus() {
+    const s = $("scanStatus");
+    s.replaceChildren(...(state.scanning ? [h("span", { class: "spinner", "aria-hidden": "true" }), "Scanning"] : []));
+    $("scanBtn").disabled = state.scanning;
+    const n = state.report ? state.report.issues.length : null;
+    $("navCount").textContent = n === null ? "" : String(n);
+  }
+  $("scanBtn").addEventListener("click", scan);
+  $("optionsBtn").addEventListener("click", () => {
+    const pop = $("options"); pop.hidden = !pop.hidden;
+    $("optionsBtn").setAttribute("aria-expanded", String(!pop.hidden));
+  });
+  document.addEventListener("click", (e) => {
+    if (!$("options").hidden && !e.target.closest("#options, #optionsBtn")) { $("options").hidden = true; $("optionsBtn").setAttribute("aria-expanded", "false"); }
+  });
+
+  // ── navigation ──
+  function go(view, opts) {
+    state.view = VIEWS.includes(view) ? view : "overview";
+    if (opts) Object.assign(state.filters, opts);
+    if (location.hash !== `#/${state.view}`) history.replaceState(null, "", `#/${state.view}`);
+    render();
+    $("main").focus({ preventScroll: true });
+  }
+  document.querySelectorAll("nav button[data-view]").forEach((b) => b.addEventListener("click", () => go(b.dataset.view)));
+  window.addEventListener("hashchange", () => go(location.hash.replace("#/", "")));
+
+  // ── helpers ──
+  const sevCounts = (issues) => SEVERITIES.reduce((acc, s) => (acc[s] = issues.filter((i) => i.severity === s).length, acc), {});
+  function sevBar(issues) {
+    const counts = sevCounts(issues); const total = issues.length || 1;
+    return h("div", { class: "bar", role: "img", "aria-label": SEVERITIES.filter((s) => counts[s]).map((s) => `${counts[s]} ${s.toLowerCase()}`).join(", ") },
+      SEVERITIES.filter((s) => counts[s]).map((s) => h("span", { class: `sev-${s}`, style: `width:${(counts[s] / total) * 100}%` })));
+  }
+  const groupBy = (items, key) => items.reduce((m, i) => (m.has(i[key]) ? m.get(i[key]).push(i) : m.set(i[key], [i]), m), new Map());
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  function when(iso) {
+    const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // ── views ──
+  function render() {
+    document.querySelectorAll("nav button[data-view]").forEach((b) => {
+      if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    const main = $("main");
+    let page;
+    if (!state.project) page = viewWelcome();
+    else if (state.view === "rules") page = viewRules();
+    else if (state.view === "setup") page = viewSetup();
+    else if (!state.report) page = state.scanning ? viewScanning() : viewReady();
+    else if (state.view === "issues") page = viewIssues();
+    else page = viewOverview();
+    main.replaceChildren(page);
+  }
+
+  function viewWelcome() {
+    return h("div", { class: "page" }, h("div", { class: "empty" },
+      h("h1", { text: "Find AI slop in your project" }),
+      h("p", { style: "max-width:520px;margin:0 auto 20px" }, "FixMySlop checks your UI and code for the tells of AI-generated work — template visuals, generic copy, accessibility gaps, leaked secrets, packages that don't exist — in seconds, with no AI model needed."),
+      h("button", { class: "btn primary", type: "button", onclick: openProjectDialog }, "Open a project")));
+  }
+  function viewScanning() {
+    return h("div", { class: "page" }, h("div", { class: "empty" }, h("h1", { text: `Scanning ${state.project.name}` }), h("p", { text: "Most projects take a few seconds." })));
+  }
+  function viewReady() {
+    return h("div", { class: "page" }, h("div", { class: "empty" },
+      h("h1", { text: `Ready to scan ${state.project.name}` }),
+      h("p", { class: "mono faint", style: "margin-bottom:20px" }, state.project.root),
+      h("button", { class: "btn primary", type: "button", onclick: scan }, "Scan project")));
+  }
+
+  function viewOverview() {
+    const r = state.report; const issues = r.issues;
+    const fixable = issues.filter((i) => i.autofix).length;
+    const prev = r.previous;
+    let delta = null;
+    if (prev) {
+      const d = Math.round((r.score - prev.score) * 10) / 10;
+      delta = d === 0 ? h("span", { class: "muted", text: "No change since the last scan" })
+        : h("span", { class: d < 0 ? "delta-good" : "delta-bad", text: `${d < 0 ? "Down" : "Up"} ${Math.abs(d)} since the last scan (${prev.score} → ${r.score})` });
+    }
+    const header = h("div", { class: "row wrap", style: "justify-content:space-between;align-items:flex-end;margin-bottom:20px" },
+      h("div", {},
+        h("div", { class: "score" }, h("b", { text: String(r.score) }), h("span", { class: "muted", text: "/ 100 slop score" }), h("span", { class: "grade", text: `Grade ${r.grade}` })),
+        h("p", { class: "muted", style: "margin-top:6px" }, `${plural(issues.length, r.baselined ? "new issue" : "issue")} · ${plural(r.files, "file")} · ${r.lines.toLocaleString()} lines · ${r.seconds}s · scanned at ${when(r.scannedAt)}`
+          + (r.baselined ? ` · ${r.baselined} pre-existing hidden by baseline` : "")),
+        delta && h("p", { style: "margin-top:2px" }, delta)),
+      issues.length ? h("select", { class: "btn", "aria-label": "Export report", onchange: exportReport },
+        h("option", { value: "" }, "Export report…"),
+        [["pdf", "PDF"], ["md", "Markdown"], ["html", "HTML (interactive)"], ["csv", "CSV"], ["json", "JSON"], ["sarif", "SARIF"]]
+          .map(([value, label]) => h("option", { value }, label))) : null,
+    );
+    if (!r.files) {
+      return h("div", { class: "page" }, h("div", { class: "card card-pad empty" },
+        h("h1", { text: "Nothing was scanned" }),
+        h("p", { text: "No supported files were found in this folder (HTML, CSS, JS/TS, JSX/TSX, Vue, Svelte, Astro, Python…). Check that you opened the right project." }),
+        h("div", { style: "margin-top:16px" }, h("button", { class: "btn", type: "button", onclick: openProjectDialog }, "Open another project"))));
+    }
+    if (!issues.length) {
+      return h("div", { class: "page" }, header, h("div", { class: "card card-pad empty" },
+        h("h1", { text: r.baselined ? "No new slop since the baseline" : "No slop found" }),
+        h("p", { text: "Keep it that way: let your coding agent check its own work, and gate pull requests in CI." }),
+        h("div", { style: "margin-top:16px" }, h("button", { class: "btn", type: "button", onclick: () => go("setup") }, "Set up integrations"))));
+    }
+
+    const agentReady = state.integrations.some((i) => i.installed && ["claude", "cursor", "agents"].includes(i.id));
+    const steps = h("div", { class: "card card-pad" }, h("h2", { text: "Fix it" }), h("div", { class: "steps" },
+      h("div", { class: `step${fixable ? "" : " done"}` }, h("span", { class: "step-num", text: "1" }),
+        h("div", {}, h("h3", { text: fixable ? `Apply ${plural(fixable, "safe fix")}` : "No safe fixes left" }),
+          h("p", { class: "muted", text: "Deletes narrating comments and debugger lines, fixes bare except. Never changes behavior." })),
+        h("button", { class: "btn", type: "button", disabled: !fixable || state.scanning, onclick: applySafeFixes }, "Apply")),
+      h("div", { class: "step" }, h("span", { class: "step-num", text: "2" }),
+        h("div", {}, h("h3", { text: "Hand the rest to your coding agent" }),
+          h("p", { class: "muted" }, "Paste the fix prompt into Claude Code, Cursor, Codex or ChatGPT. It lists every issue, the exact fix and your design tokens. ",
+            agentReady ? null : h("button", { class: "linklike", type: "button", onclick: () => go("setup"), style: "text-decoration:underline" }, "Connect your agent"))),
+        h("button", { class: "btn primary", type: "button", onclick: copyBriefAll }, "Copy fix prompt")),
+      h("div", { class: "step" }, h("span", { class: "step-num", text: "3" }),
+        h("div", {}, h("h3", { text: "Scan again to confirm" }), h("p", { class: "muted", text: "Track the score going down." })),
+        h("button", { class: "btn", type: "button", disabled: state.scanning, onclick: scan }, "Scan"))));
+
+    const byCat = groupBy(issues, "category");
+    const cats = h("div", { class: "grid cols-3", style: "margin:16px 0" }, [...byCat.entries()].sort((a, b) => b[1].length - a[1].length).map(([cat, list]) =>
+      h("button", { class: "card cat", type: "button", onclick: () => go("issues", { cat, file: "", rule: "", q: "" }) },
+        h("span", { class: "muted", text: cat }), h("b", { text: String(list.length) }), sevBar(list))));
+
+    const files = [...groupBy(issues, "file").entries()].sort((a, b) => weight(b[1]) - weight(a[1])).slice(0, 8);
+    const rules = [...groupBy(issues, "rule").entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 8);
+    const lists = h("div", { class: "grid cols-2" },
+      h("div", { class: "card card-pad" }, h("h2", { text: "Most affected files" }), h("table", { class: "table" }, h("tbody", {}, files.map(([file, list]) =>
+        h("tr", {}, h("td", { style: "max-width:0" }, h("button", { class: "linklike mono truncate", type: "button", title: file, onclick: () => go("issues", { file, rule: "", cat: "", q: "" }) }, file)),
+          h("td", { style: "width:90px;padding-left:12px" }, sevBar(list)), h("td", { class: "num", text: String(list.length) })))))),
+      h("div", { class: "card card-pad" }, h("h2", { text: "Most frequent problems" }), h("table", { class: "table" }, h("tbody", {}, rules.map(([rule, list]) =>
+        h("tr", {}, h("td", { style: "max-width:0" }, h("button", { class: "linklike truncate", type: "button", onclick: () => go("issues", { rule, file: "", cat: "", q: "" }) }, list[0].title),
+          h("span", { class: "mono faint truncate", text: rule })), h("td", { class: "num", text: String(list.length) })))))));
+    return h("div", { class: "page" }, header, steps, cats, lists);
+  }
+  const W = { CRITICAL: 10, HIGH: 5, MEDIUM: 2, LOW: 0.75, INFO: 0.1 };
+  const weight = (list) => list.reduce((s, i) => s + (W[i.severity] || 1), 0);
+
+  async function applySafeFixes() {
+    try {
+      state.scanning = true; renderStatus(); render();
+      const res = await api("/api/fix-safe", {});
+      state.report = res.report;
+      toast(res.applied ? `Applied ${plural(res.applied, "fix")} in ${plural(res.files, "file")}` : "Nothing to fix safely");
+    } catch (e) { toast(`Safe fixes failed: ${e.message}`); }
+    state.scanning = false; renderStatus(); render();
+  }
+  async function exportReport(event) {
+    const fmt = event.target.value;
+    event.target.value = "";
+    if (!fmt) return;
+    try {
+      const file = await api(`/api/export?fmt=${fmt}`);
+      const bytes = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
+      const a = h("a", { href: URL.createObjectURL(new Blob([bytes], { type: file.mime })), download: file.name });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast(`Saved ${file.name} to your downloads`);
+    } catch (e) { toast(`Export failed: ${e.message}`); }
+  }
+  async function copyBriefAll() {
+    try { copy((await api("/api/brief")).text, "Fix prompt copied. Paste it into your coding agent."); }
+    catch (e) { toast(e.message); }
+  }
+  async function copyBriefFile(file) {
+    try { copy((await api(`/api/brief?file=${encodeURIComponent(file)}`)).text, "Fix prompt for this file copied"); }
+    catch (e) { toast(e.message); }
+  }
+
+  // ── issues ──
+  function filtered() {
+    const f = state.filters; const q = f.q.trim().toLowerCase();
+    return state.report.issues.filter((i) => f.sev.has(i.severity) && (!f.cat || i.category === f.cat) && (!f.file || i.file === f.file)
+      && (!f.rule || i.rule === f.rule) && (!q || `${i.file} ${i.rule} ${i.title} ${i.evidence}`.toLowerCase().includes(q)));
+  }
+  function viewIssues() {
+    const r = state.report; const f = state.filters; const all = r.issues;
+    const list = filtered();
+    if (state.selected === null || !list.some((i) => i.id === state.selected)) state.selected = list.length ? list[0].id : null;
+    const counts = sevCounts(all);
+    const search = h("input", { class: "search", type: "search", placeholder: "Filter by file, rule or text   /", "aria-label": "Filter issues", value: f.q,
+      oninput: (e) => { f.q = e.target.value; refreshList(); } });
+    const toolbar = h("div", { class: "toolbar" }, search,
+      SEVERITIES.filter((s) => counts[s]).map((s) => h("button", { class: `pill chip sev-${s}`, type: "button", "aria-pressed": String(f.sev.has(s)),
+        onclick: () => { f.sev.has(s) ? f.sev.delete(s) : f.sev.add(s); render(); } }, h("span", { class: "dot" }), `${s.toLowerCase()} ${counts[s]}`)),
+      h("select", { class: "input", "aria-label": "Category", onchange: (e) => { f.cat = e.target.value; render(); } },
+        h("option", { value: "" }, "All categories"), [...new Set(all.map((i) => i.category))].sort().map((c) => h("option", { value: c, selected: c === f.cat }, c))),
+      h("select", { class: "input", "aria-label": "Group by", onchange: (e) => { f.group = e.target.value; render(); } },
+        h("option", { value: "file", selected: f.group === "file" }, "Group by file"), h("option", { value: "rule", selected: f.group === "rule" }, "Group by problem")));
+    const active = [f.file && ["file", f.file], f.rule && ["problem", f.rule]].filter(Boolean);
+    const chips = active.length ? h("div", { class: "row wrap", style: "margin:-4px 0 12px" }, active.map(([kind, value]) =>
+      h("span", { class: "pill" }, `${kind}: `, h("span", { class: "mono", text: value }),
+        h("button", { class: "linklike", type: "button", "aria-label": `Clear ${kind} filter`, onclick: () => { f[kind === "file" ? "file" : "rule"] = ""; render(); } }, " ×")))) : null;
+
+    const listEl = h("div", { class: "card list", role: "listbox", "aria-label": "Issues" });
+    const detailEl = h("div", { class: "card card-pad detail" });
+    const page = h("div", { class: "page" }, toolbar, chips, h("div", { class: "split" }, listEl, detailEl));
+
+    function refreshList() {
+      const items = filtered();
+      if (!items.some((i) => i.id === state.selected)) state.selected = items.length ? items[0].id : null;
+      const groups = groupBy(items, f.group === "rule" ? "rule" : "file");
+      listEl.replaceChildren(...(items.length ? [...groups.entries()].map(([key, rows]) => h("div", {},
+        h("div", { class: "group-head", title: key },
+          f.group === "rule" ? h("span", { text: rows[0].title })
+            : h("span", { class: "mono truncate" }, h("strong", { text: key.split("/").pop() }), h("span", { class: "faint", text: key.includes("/") ? `  ${key.slice(0, key.lastIndexOf("/"))}` : "" })),
+          h("span", { class: "faint", text: String(rows.length) }),
+          f.group === "file" ? h("button", { class: "btn ghost small", type: "button", style: "margin-left:auto", onclick: () => copyBriefFile(key) }, "Copy fix prompt") : null),
+        rows.map((i) => h("button", { class: "issue-row", type: "button", role: "option", "aria-selected": String(i.id === state.selected), "data-id": i.id,
+          onclick: () => select(i.id) },
+          h("span", { class: `dot sev-${i.severity}`, title: i.severity }),
+          h("span", { class: "truncate" }, i.title),
+          h("span", { class: "where", text: f.group === "rule" ? `${i.file.split("/").pop()}:${i.line}` : `L${i.line}` })))))
+        : [h("div", { class: "empty", text: "No issues match these filters." })]));
+      renderDetail();
+    }
+    function select(id) {
+      state.selected = id;
+      listEl.querySelectorAll(".issue-row").forEach((row) => row.setAttribute("aria-selected", String(+row.dataset.id === id)));
+      renderDetail();
+    }
+    async function renderDetail() {
+      const issue = r.issues.find((i) => i.id === state.selected);
+      if (!issue) { detailEl.replaceChildren(h("p", { class: "muted", text: "Select an issue." })); return; }
+      const meta = state.rules && state.rules.rules.find((x) => x.id === issue.rule);
+      const codeBox = h("div", { class: "code", "aria-label": "Code" }, h("div", {}, h("span", { class: "n" }), h("span", { class: "faint", text: "Loading…" })));
+      detailEl.replaceChildren(
+        h("div", { class: "row", style: "gap:8px;margin-bottom:4px" }, h("span", { class: `sev-label sev-${issue.severity}`, text: issue.severity }), h("span", { class: "mono faint", text: issue.rule })),
+        h("h1", { text: issue.title, style: "font-size:16px" }),
+        h("p", { class: "mono muted", style: "margin:4px 0 16px" }, `${issue.file}:${issue.line}`),
+        h("section", {}, h("div", { class: "label", text: "What's wrong" }),
+          issue.detail ? h("p", { style: "margin-bottom:6px" }, issue.detail) : null,
+          h("p", { class: "muted", text: issue.why || (meta ? meta.why : (issue.detail ? "" : issue.title)) })),
+        h("section", {}, codeBox),
+        issue.fix ? h("section", {}, h("div", { class: "label", text: "How to fix" }), h("p", { text: issue.fix }),
+          issue.autofix ? h("p", { class: "muted", style: "margin-top:4px", text: "Safe to auto-fix: use Apply safe fixes on the Overview." }) : null) : null,
+        h("section", { class: "row wrap" },
+          h("button", { class: "btn primary", type: "button", onclick: () => copyBriefFile(issue.file) }, "Copy fix prompt for this file"),
+          issue.tool === "fixmyslop" ? h("button", { class: "btn ghost", type: "button", onclick: () => disableRule(issue.rule) }, "Turn off this rule for the project") : null));
+      try {
+        const snip = await api(`/api/snippet?file=${encodeURIComponent(issue.file)}&line=${issue.line}`);
+        if (state.selected !== issue.id) return;
+        codeBox.replaceChildren(...snip.lines.map((text, k) => {
+          const n = snip.start + k;
+          return h("div", { class: n === issue.line ? "hit" : "" }, h("span", { class: "n", text: String(n) }), h("span", { text: text || " " }));
+        }));
+      } catch {
+        codeBox.replaceChildren(h("div", {}, h("span", { class: "n" }), h("span", { text: issue.evidence || "(no preview)" })));
+      }
+    }
+    page.refreshList = refreshList; page.select = select;
+    setTimeout(refreshList);
+    state.issuesPage = page;
+    return page;
+  }
+
+  async function disableRule(id) {
+    if (!confirm(`Turn off ${id} for this project? It is saved to .fixmyslop.yml.`)) return;
+    try { await api("/api/rule", { id, enabled: false }); state.rules = null; toast(`${id} turned off`); await scan(); }
+    catch (e) { toast(e.message); }
+  }
+
+  // ── rules ──
+  function viewRules() {
+    const page = h("div", { class: "page" }, h("p", { class: "muted", text: "Loading rules…" }));
+    (async () => {
+      if (!state.rules) { try { state.rules = await api("/api/rules"); } catch (e) { toast(e.message); return; } }
+      const data = state.rules;
+      const counts = state.report ? groupBy(state.report.issues, "rule") : new Map();
+      const banner = state.rulesDirty ? h("div", { class: "banner" }, h("span", {}, "Saved to ", h("code", { text: data.configFile }), ". Scan again to apply."),
+        h("div", { class: "spacer" }), h("button", { class: "btn small primary", type: "button", onclick: scan }, "Scan")) : null;
+      const groups = Object.entries(data.groups).map(([key, label]) => {
+        const rules = data.rules.filter((x) => x.group === key);
+        return h("div", { class: "card", style: "margin-bottom:16px" },
+          h("div", { class: "row", style: "padding:12px 16px;border-bottom:1px solid var(--line)" }, h("h2", { text: label, style: "margin:0" }),
+            h("span", { class: "faint", text: `${rules.filter((x) => x.enabled).length} of ${rules.length} on` })),
+          rules.map((rule) => h("div", { class: "rule" },
+            h("button", { class: "switch", type: "button", role: "switch", "aria-checked": String(rule.enabled), "aria-label": `${rule.id} ${rule.enabled ? "on" : "off"}`,
+              onclick: async (e) => {
+                const next = !rule.enabled;
+                try { await api("/api/rule", { id: rule.id, enabled: next }); rule.enabled = next; state.rulesDirty = true; render(); }
+                catch (err) { toast(err.message); }
+              } }),
+            h("div", {}, h("div", { class: "row", style: "gap:8px" }, h("h3", { text: rule.title }), h("span", { class: "mono faint", text: rule.id })),
+              h("p", { class: "muted", style: "margin-top:2px", text: rule.why })),
+            h("div", { class: "row", style: "gap:8px" }, rule.autofix ? h("span", { class: "pill", text: "auto-fix" }) : null,
+              h("span", { class: `sev-label sev-${rule.severity}`, text: rule.severity }),
+              counts.has(rule.id) ? h("span", { class: "pill", text: `${counts.get(rule.id).length} found` }) : null))));
+      });
+      page.replaceChildren(h("div", { class: "row", style: "justify-content:space-between;margin-bottom:16px" }, h("h1", { text: "Rules" }),
+        h("span", { class: "muted" }, "Per-project settings live in ", h("code", { text: data.configFile }))), ...[banner].filter(Boolean), ...groups);
+    })();
+    return page;
+  }
+
+  // ── setup ──
+  function viewSetup() {
+    const cmds = [
+      ["Scan this project", "fixmyslop scan"],
+      ["Only what changed vs main", "fixmyslop scan --changed"],
+      ["Apply safe fixes, then hand the rest to your agent", "fixmyslop fix"],
+      ["Fail CI on HIGH issues", "fixmyslop scan --fail-on high"],
+      ["Accept existing issues (only new ones get reported)", "fixmyslop baseline"],
+      ["Fix prompt for any agent", "fixmyslop scan -f prompt"],
+    ];
+    return h("div", { class: "page stack" },
+      h("h1", { text: "Setup" }),
+      h("div", { class: "card" }, h("div", { style: "padding:14px 16px;border-bottom:1px solid var(--line)" }, h("h2", { text: "Connect your coding agent and CI", style: "margin:0" }),
+        h("p", { class: "muted", text: "Your agent checks its own work with FixMySlop while it writes, and pull requests get annotated." })),
+        state.integrations.map((item) => h("div", { class: "integration" },
+          h("div", {}, h("h3", { text: item.name }), h("p", { class: "muted", text: item.what })),
+          item.installed ? h("span", { class: "installed" }, check(), "Installed")
+            : h("button", { class: "btn", type: "button", onclick: () => install(item.id) }, "Install")))),
+      h("div", { class: "card card-pad" }, h("h2", { text: "Baseline for existing code" }),
+        h("p", { class: "muted", style: "margin-bottom:12px" }, "Big codebase with lots of existing issues? Accept them once, and FixMySlop (and CI) will only report slop added after today. Saved to ",
+          h("code", { text: ".fixmyslop-baseline.json" }), " — commit it."),
+        h("div", { class: "row wrap" },
+          h("button", { class: "btn", type: "button", disabled: !state.report || state.scanning, onclick: () => setBaseline(false) },
+            state.baseline ? "Re-accept current issues" : "Accept current issues"),
+          state.baseline ? h("button", { class: "btn ghost", type: "button", onclick: () => setBaseline(true) }, "Remove baseline") : null,
+          state.baseline ? h("span", { class: "installed" }, check(), "Baseline active") : null)),
+      h("div", { class: "card" }, h("div", { style: "padding:14px 16px;border-bottom:1px solid var(--line)" }, h("h2", { text: "Command line", style: "margin:0" }),
+        h("p", { class: "muted", text: "Everything here is also available from the terminal." })),
+        cmds.map(([what, cmd]) => h("div", { class: "cmd" }, h("div", {}, h("p", { text: what }), h("code", { text: cmd })),
+          h("button", { class: "btn ghost small", type: "button", "aria-label": `Copy ${cmd}`, onclick: () => copy(cmd) }, "Copy")))),
+      h("details", { class: "card card-pad" }, h("summary", { style: "cursor:pointer;font-weight:600" }, "Advanced: optional LLM review"),
+        h("p", { class: "muted", style: "margin:10px 0" }, "FixMySlop doesn't need an AI model; every check above is deterministic. If you want an extra, slower review pass by a model, point it at any OpenAI-compatible endpoint (Ollama, LM Studio, OpenRouter, OpenAI):"),
+        h("div", { class: "cmd", style: "border:1px solid var(--line);border-radius:6px" }, h("code", { text: "fixmyslop scan --llm -b http://localhost:11434/v1 -m qwen2.5-coder:7b" }),
+          h("button", { class: "btn ghost small", type: "button", onclick: () => copy("fixmyslop scan --llm -b http://localhost:11434/v1 -m qwen2.5-coder:7b") }, "Copy"))),
+      h("p", { class: "faint" }, `FixMySlop ${"__VERSION__"} · `, h("a", { href: "https://github.com/MrSpideyNihal/FixMySlop", target: "_blank", rel: "noopener noreferrer", style: "color:inherit" }, "GitHub")));
+  }
+  async function setBaseline(clear) {
+    if (!clear && !confirm("Accept all current issues as pre-existing? Only new slop will be reported after this.")) return;
+    try {
+      state.scanning = true; renderStatus(); render();
+      state.report = await api("/api/baseline", { clear });
+      state.baseline = !clear;
+      toast(clear ? "Baseline removed" : "Baseline saved. Only new issues will be reported.");
+    } catch (e) { toast(e.message); }
+    state.scanning = false; renderStatus(); render();
+  }
+  async function install(id) {
+    try {
+      const res = await api("/api/integration", { id });
+      state.integrations = res.integrations;
+      toast(res.messages[res.messages.length - 1]);
+      render();
+    } catch (e) { toast(e.message); }
+  }
+
+  // ── keyboard ──
+  document.addEventListener("keydown", (e) => {
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    if (e.key === "Escape" && typing) { document.activeElement.blur(); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "r") { e.preventDefault(); scan(); }
+    else if (e.key === "/" && state.view === "issues") { e.preventDefault(); const s = document.querySelector(".search"); if (s) s.focus(); }
+    else if (["1", "2", "3", "4"].includes(e.key)) go(VIEWS[+e.key - 1]);
+    else if ((e.key === "j" || e.key === "k") && state.view === "issues" && state.issuesPage) {
+      const items = filtered(); const idx = items.findIndex((i) => i.id === state.selected);
+      const next = items[Math.min(items.length - 1, Math.max(0, idx + (e.key === "j" ? 1 : -1)))];
+      if (next) {
+        state.issuesPage.select(next.id);
+        const row = document.querySelector(`.issue-row[data-id="${next.id}"]`); if (row) row.scrollIntoView({ block: "nearest" });
+      }
+    }
+  });
+
+  // ── boot ──
+  (async () => {
+    try {
+      let data;
+      try { data = JSON.parse($("boot").textContent); } catch { data = await api("/api/state"); }
+      applyState(data);
+      state.view = VIEWS.includes(location.hash.replace("#/", "")) ? location.hash.replace("#/", "") : "overview";
+      renderStatus(); render();
+      api("/api/rules").then((r) => { state.rules = r; }).catch(() => {});
+      if (state.project && !state.report) scan();
+    } catch (e) {
+      $("main").replaceChildren(h("div", { class: "page empty" }, h("h1", { text: "Can't reach FixMySlop" }), h("p", { text: e.message })));
+    }
+  })();
+})();
+</script>
+</body>
+</html>

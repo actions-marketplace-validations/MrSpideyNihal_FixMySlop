@@ -1,25 +1,16 @@
 """
-FixMySlop entry point.
-- No args → launch GUI (falls back to CLI help when PyQt5 isn't installed)
-- Any args → CLI (`fixmyslop gui` also launches the GUI)
+FixMySlop entry point. CLI-first: `fixmyslop` alone prints help; `fixmyslop ui` opens the app.
 """
 import sys
 
 
 def main():
-    """Launch GUI if no args given, otherwise run CLI."""
+    """Run the CLI (no arguments shows help)."""
     from fixmyslop.cli.cli_app import app
 
-    if len(sys.argv) > 1:
-        app()
-        return
-    try:
-        from fixmyslop.ui.app import launch
-    except ImportError:
+    if len(sys.argv) == 1:
         sys.argv.append("--help")
-        app()
-        return
-    launch()
+    app()
 
 
 if __name__ == "__main__":

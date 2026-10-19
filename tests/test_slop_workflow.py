@@ -60,6 +60,7 @@ def test_brief_lists_issues_with_fix_hints(tmp_path):
     assert "## UI direction" in brief
     assert "Hero.tsx" in brief and "ui/ai-gradient" in brief
     assert "How to fix each rule" in brief
+    assert "## Production bar" in brief and "before and after your changes" in brief
 
 
 def test_sarif_export(tmp_path):
@@ -177,3 +178,37 @@ def test_scan_open_writes_report(tmp_path, monkeypatch):
     result = runner.invoke(app, ["scan", str(_project(tmp_path)), "--no-static", "--open", "--fail-on", "none"])
     assert result.exit_code == 0
     assert (tmp_path / ".fixmyslop" / "report.html").exists() and opened
+
+
+def test_baseline_hides_existing_and_survives_line_shifts(tmp_path):
+    """Accept today's issues; moving code around must not resurface them, new slop must still show."""
+    from fixmyslop.core.slop.baseline import write_baseline
+    project = _project(tmp_path)
+    report, engine = run_scan([str(project)], use_static=False, use_baseline=False)
+    assert report.issues
+    write_baseline(project, report.issues, engine.relpath)
+
+    hero = project / "Hero.tsx"
+    hero.write_text("// header comment added above everything\n\n" + hero.read_text(encoding="utf-8"), encoding="utf-8")
+    report, _ = run_scan([str(project)], use_static=False)
+    assert report.issues == [] and report.baselined > 0
+
+    hero.write_text(hero.read_text(encoding="utf-8") + '<a href="#">new dead link</a>\n', encoding="utf-8")
+    report, _ = run_scan([str(project)], use_static=False)
+    assert [i.rule_id for i in report.issues] == ["a11y/dead-link"]
+    assert run_scan([str(project)], use_static=False, use_baseline=False)[0].baselined == 0
+
+
+def test_baseline_command_and_fail_on_only_new(tmp_path):
+    project = _project(tmp_path)
+    assert runner.invoke(app, ["baseline", str(project), "--no-static"]).exit_code == 0
+    assert (project / ".fixmyslop-baseline.json").exists()
+    assert runner.invoke(app, ["scan", str(project), "--no-static", "--fail-on", "low"]).exit_code == 0
+    assert runner.invoke(app, ["scan", str(project), "--no-static", "--fail-on", "low", "--no-baseline"]).exit_code == 1
+
+
+
+def test_empty_scan_says_nothing_was_scanned(tmp_path):
+    (tmp_path / "notes.txt").write_text("hello", encoding="utf-8")
+    result = runner.invoke(app, ["scan", str(tmp_path), "--no-static", "--fail-on", "none"])
+    assert "Nothing was scanned" in result.stdout and "Clean." not in result.stdout

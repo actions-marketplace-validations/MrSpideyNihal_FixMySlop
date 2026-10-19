@@ -52,7 +52,11 @@ fail_on: high
 
 False positive? Add `fixmyslop-ignore[<rule-id>] <reason>` in a comment on the line (or the line above).
 
-## Desktop app
+## The app
 
-`fixmyslop gui` (install with `pip install "fixmyslop[gui]"`). Rules always run; tick
-"LLM review" for an optional model pass if you have Ollama or another backend running.
+`fixmyslop ui` opens FixMySlop in your browser (local only). Pick a project, and you get the score,
+every issue with its code and fix, one-click safe fixes, a fix prompt to paste into your coding agent,
+per-project rule toggles, and one-click setup for Claude Code, Cursor and CI. Everything in it is also
+available from the CLI.
+
+The optional LLM review lives in the CLI: `fixmyslop scan --llm` (see the README).

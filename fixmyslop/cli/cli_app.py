@@ -19,7 +19,7 @@ from rich.markup import escape
 from fixmyslop.macros import (
     APP_NAME, APP_VERSION, DEFAULT_MODEL, DEFAULT_BASE_URL, DEFAULT_API_KEY,
     SCAN_MODE_TURBO, SCAN_MODE_DEEP, DEFAULT_SCAN_MODE, SEVERITY_RANK,
-    REPORT_FORMAT_TEXT, REPORT_FORMAT_PDF, SUPPORTED_EXTENSIONS,
+    REPORT_FORMAT_TEXT, REPORT_FORMAT_PDF, is_scannable,
 )
 from fixmyslop.cli.cli_output import (
     console, print_banner, print_report, print_error, print_success, print_info,
@@ -88,8 +88,11 @@ def _collect_files(targets: list[Path], changed: bool, base: Optional[str]) -> O
 def run_scan(paths: Optional[list[str]], *, changed: bool = False, base: Optional[str] = None,
              use_static: bool = True, llm_client=None, scan_mode: str = DEFAULT_SCAN_MODE,
              online: bool = False, only: Optional[list[str]] = None, min_severity: str = "low",
-             show_progress: bool = False):
-    """Scan paths and return (report, engine). Shared by scan, fix and the GUI-free flows."""
+             show_progress: bool = False, use_baseline: bool = True):
+    """Scan paths and return (report, engine). Shared by scan, fix, ui, hook-free flows.
+
+    With use_baseline, issues recorded in .fixmyslop-baseline.json are hidden (counted in report.baselined).
+    """
     from fixmyslop.core.scanner import Scanner
     from fixmyslop.core.analyzer import Analyzer
     from fixmyslop.core.report_builder import ReportBuilder
@@ -132,6 +135,13 @@ def run_scan(paths: Optional[list[str]], *, changed: bool = False, base: Optiona
         issues = [i for i in issues if i.source_tool == "fixmyslop"]
     issues = at_or_above(issues, min_severity) if min_severity.lower() != "info" else issues
 
+    baselined = 0
+    if use_baseline:
+        from fixmyslop.core.slop.baseline import apply_baseline, load_baseline
+        accepted = load_baseline(root)
+        if accepted:
+            issues, baselined = apply_baseline(issues, accepted, engine.relpath, root)
+
     report = ReportBuilder().build(
         repo_path=str(root),
         issues=issues,
@@ -142,6 +152,7 @@ def run_scan(paths: Optional[list[str]], *, changed: bool = False, base: Optiona
         scan_mode=scan_mode if llm_client else "rules",
         lines_scanned=engine.lines_scanned,
     )
+    report.baselined = baselined
     if any(i.rule_id.startswith(("ui/", "a11y/")) for i in issues):
         report.design_context = engine.theme.design_context()
     return report, engine
@@ -190,6 +201,7 @@ def scan(
     no_static: bool = typer.Option(False, "--no-static", help="Skip ruff/bandit/semgrep (rules only)"),
     online: bool = typer.Option(False, "--online", help="Verify suspicious imports against PyPI/npm"),
     limit: int = typer.Option(60, "--limit", help="Max issues printed in text mode (0 = all)"),
+    no_baseline: bool = typer.Option(False, "--no-baseline", help="Also show issues accepted in .fixmyslop-baseline.json"),
     open_report: bool = typer.Option(False, "--open", help="Write the interactive HTML report and open it in a browser"),
     fix: bool = typer.Option(False, "--fix", help="Apply safe deterministic fixes after scanning"),
     llm: bool = typer.Option(False, "--llm", help="Also run an LLM review pass (slow; local or cloud model)"),
@@ -234,11 +246,13 @@ def scan(
             with console.status("Scanning…", spinner="dots"):
                 report, engine = run_scan(paths, changed=changed, base=base, use_static=not no_static,
                                           llm_client=client, scan_mode=scan_mode, online=online,
-                                          only=only, min_severity=min_severity)
+                                          only=only, min_severity=min_severity,
+                                          use_baseline=not no_baseline)
         else:
             report, engine = run_scan(paths, changed=changed, base=base, use_static=not no_static,
                                       llm_client=client, scan_mode=scan_mode, online=online, only=only,
-                                      min_severity=min_severity, show_progress=text_mode)
+                                      min_severity=min_severity, show_progress=text_mode,
+                                      use_baseline=not no_baseline)
     except FileNotFoundError as e:
         print_error(str(e))
         raise typer.Exit(1) from None
@@ -483,7 +497,7 @@ def hook(
         path = Path(raw_path)
         if not path.is_absolute():
             path = cwd / path
-        if not path.is_file() or path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        if not path.is_file() or not is_scannable(path):
             continue
         root = git_root(path) or path.parent
         config = load_config(root)
@@ -598,6 +612,29 @@ def init(
     console.print("\nNow run [cyan]fixmyslop scan[/cyan]\n")
 
 
+# ─── baseline ───────────────────────────────────────────────────────────────
+
+@app.command()
+def baseline(
+    path: str = typer.Argument(".", help="Project root"),
+    no_static: bool = typer.Option(False, "--no-static", help="Skip ruff/bandit/semgrep"),
+):
+    """Accept every current issue as pre-existing; later scans only report new ones."""
+    from fixmyslop.core.slop.baseline import BASELINE_FILE, write_baseline
+
+    print_banner(APP_NAME, APP_VERSION)
+    try:
+        with console.status("Scanning…", spinner="dots"):
+            report, engine = run_scan([path], use_static=not no_static, min_severity="info", use_baseline=False)
+    except FileNotFoundError as e:
+        print_error(str(e))
+        raise typer.Exit(1) from None
+    written = write_baseline(Path(report.repo_path), report.issues, engine.relpath)
+    print_success(f"Baselined {len(report.issues)} existing issue(s) in {written.name}")
+    print_info(f"Commit {BASELINE_FILE}. From now on `fixmyslop scan` (and CI) only reports new slop; "
+               "`--no-baseline` shows everything.")
+
+
 # ─── mcp ────────────────────────────────────────────────────────────────────
 
 @app.command()
@@ -658,14 +695,27 @@ def models(
 
 
 @app.command()
-def gui():
-    """Launch the desktop GUI (needs `pip install fixmyslop[gui]`)."""
-    try:
-        from fixmyslop.ui.app import launch
-    except ImportError:
-        print_error("PyQt5 not installed. Run: pip install fixmyslop[gui]")
-        raise typer.Exit(1) from None
-    launch()
+def ui(
+    path: Optional[str] = typer.Argument(None, help="Project folder to open (default: current directory)"),
+    port: int = typer.Option(7777, "--port", help="Port on 127.0.0.1 (falls back to a free one if busy)"),
+    no_open: bool = typer.Option(False, "--no-open", help="Don't open a browser tab"),
+):
+    """Open the FixMySlop app in your browser (local only)."""
+    from fixmyslop.web.server import serve
+    root = Path(path or ".").resolve()
+    if not root.is_dir():
+        print_error(f"Not a folder: {root}")
+        raise typer.Exit(1)
+    serve(root, port=port, open_browser=not no_open)
+
+
+@app.command(hidden=True)
+def gui(
+    path: Optional[str] = typer.Argument(None),
+    port: int = typer.Option(7777, "--port"),
+):
+    """Alias for `fixmyslop ui`."""
+    ui(path=path, port=port, no_open=False)
 
 
 @app.command()

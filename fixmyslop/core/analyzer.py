@@ -27,6 +27,7 @@ from fixmyslop.macros import (
     DEEP_MAX_TOKENS,
     DEEP_MAX_ISSUES,
     DEEP_CHUNK_SIZE,
+    CATEGORY_AI_SMELL,
 )
 
 logger = get_logger(__name__)
@@ -437,7 +438,7 @@ class Analyzer:
                 line_start=item.get("line_start", 0),
                 line_end=item.get("line_end", 0),
                 severity=item.get("severity", SEVERITY_HIGH),
-                category=item.get("category", "AI Smell"),
+                category=item.get("category", CATEGORY_AI_SMELL),
                 rule_id=item.get("rule_id", "llm_detected"),
                 title=item.get("title", "Issue detected"),
                 description=item.get("description", ""),

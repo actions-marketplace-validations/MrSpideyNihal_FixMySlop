@@ -37,6 +37,31 @@ _RULES_OF_ENGAGEMENT = """\
 - If an item is a genuine false positive, leave the code and add `{marker}[<rule-id>]` with a short reason
   in a comment on the line above.
 - When done, run `fixmyslop scan {targets} --fail-on low` and repeat until it passes.
+
+## Production bar (every fix, not a rewrite)
+Each fix must be what you'd ship to real users, but stay inside the items below.
+- Errors: handle them for real. Log with context or show the user a state they can act on; never just silence
+  a finding with an empty comment. Fire-and-forget code (telemetry, prefetch) may ignore errors with a comment
+  saying why.
+- Accessibility: keyboard focus visible, every control has an accessible name, images have alt text.
+- Security: no secrets in code or committed env files. If a real key was ever committed, say it must be
+  rotated; removing it from the file isn't enough.
+- No dead code left behind: when a finding shows a file or function is an unused duplicate, delete it rather
+  than keeping both.
+- Verify before you finish: run the project's type check, lint, tests and build (whatever package.json /
+  pyproject defines) before and after your changes. Your changes must not add new errors. List any
+  pre-existing failures in your summary instead of hiding them.
+- Summarize what you changed per file, anything you left as a false positive (and why), and anything the
+  user must do themselves (rotate a key, choose a font, supply real testimonials).
+"""
+
+_DOCS_DIRECTION = """\
+## Docs direction (applies to every docs/* item)
+- Docs must match the repo: use the real script names from package.json, the real repository URL, and links to
+  files that exist. If the docs describe something that doesn't exist, fix the docs; add the missing piece
+  only when the docs are clearly right (e.g. a LICENSE file for the license the README states).
+- Plain headings without emoji; say what the project does and how to run it, with specifics instead of hype.
+- Remove chatbot framing ("Certainly! Here's...") and fill in or delete every bracketed placeholder.
 """
 
 
@@ -67,6 +92,8 @@ def build_fix_brief(issues: list[Issue], relpath: Callable[[str], str], targets:
         out.append(_UI_DIRECTION)
         if design_context:
             out += ["## This project's design system (use it)", design_context, ""]
+    if any(i.rule_id.startswith("docs/") for i in issues):
+        out.append(_DOCS_DIRECTION)
 
     fix_hints: dict[str, str] = {}
     out.append("## Issues")

@@ -1,0 +1,734 @@
+{
+ "method": "80 findings drawn at random (seed 2026) from all findings on the pinned corpus with FixMySlop 0.6.0-dev (rules only, min severity LOW). Each was judged by reading the offending code in context; ambiguous ones were checked against the surrounding source.",
+ "reviewer": "single reviewer (Claude), not independently verified",
+ "labels": [
+  {
+   "repo": "leadmachine-leadcatch-lovable",
+   "group": "ai",
+   "file": "src/routes/api/whatsapp-presence.ts",
+   "line": 24,
+   "rule": "slop/ts-any",
+   "evidence": "async function getLeadContext(db: any, tenantId: string, leadId: string) {",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Insights.tsx",
+   "line": 200,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => go(\"profile\")} className=\"h-10 w-10 rounded-full border border-border flex items-center justify-center active:scale-90\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "dl-life-canvas",
+   "group": "ai",
+   "file": "src/routes/goals.tsx",
+   "line": 193,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "<span className=\"text-[10px] uppercase tracking-[0.18em] text-muted-foreground\">Новая цель или задача</span>",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/agenda/use-agenda-data.ts",
+   "line": 408,
+   "rule": "slop/ts-any",
+   "evidence": ".from(\"branch_settings\" as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisor.tsx",
+   "line": 3642,
+   "rule": "ui/emoji-icons",
+   "evidence": "emoji: \"✅\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/TripDetail.tsx",
+   "line": 680,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => go(\"trips\")} className=\"h-10 w-10 rounded-full border border-border flex items-center justify-center active:scale-90 shrink-0\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 2564,
+   "rule": "ui/emoji-icons",
+   "evidence": "<Row label=\"📍 Origen del cobro\" value={<ChargeTypePill type={chargeType} />} />",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/reservar/$slug.tsx",
+   "line": 194,
+   "rule": "ui/emoji-icons",
+   "evidence": "return \"⭐ Recomendado\";",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisor.tsx",
+   "line": 1062,
+   "rule": "ui/gimmick-animation",
+   "evidence": "className=\"absolute inset-0 rounded-[2rem] ring-1 ring-primary/20 animate-ping\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/Section6.tsx",
+   "line": 114,
+   "rule": "ui/arbitrary-color",
+   "evidence": "<div className=\"absolute inset-0 -z-30 bg-[#050308]\" />",
+   "verdict": "tp"
+  },
+  {
+   "repo": "leadmachine-leadcatch-lovable",
+   "group": "ai",
+   "file": "src/routes/api/cron/market-intelligence/ingest.ts",
+   "line": 31,
+   "rule": "slop/ts-any",
+   "evidence": "const enabled = new Set((enabledProfiles ?? []).filter((profile: any) => profile.market_intelligence_enabled).map((profile: any) => profile.tenant_id));",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/shared.tsx",
+   "line": 208,
+   "rule": "ui/ai-gradient",
+   "evidence": "? \"bg-gradient-to-r from-sky-400 to-violet-500 ring-violet-400/45\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/cash-register/precios-tab.tsx",
+   "line": 119,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "<div className=\"text-[10px] uppercase tracking-[0.18em] font-semibold text-muted-foreground/70 px-1\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisor.tsx",
+   "line": 1113,
+   "rule": "ui/blur-blobs",
+   "evidence": "<div className=\"pointer-events-none absolute -left-32 top-10 h-72 w-72 rounded-full bg-violet-500/16 blur-3xl\" />",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/agenda.tsx",
+   "line": 3025,
+   "rule": "a11y/clickable-div",
+   "evidence": "<div",
+   "verdict": "tp",
+   "note": "Calendar slot selectable only by mouse."
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/agenda.tsx",
+   "line": 3061,
+   "rule": "a11y/clickable-div",
+   "evidence": "<div",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/section1/Header.tsx",
+   "line": 100,
+   "rule": "ui/ai-gradient",
+   "evidence": "background: \"linear-gradient(135deg, oklch(0.62 0.24 292), oklch(0.46 0.24 296))\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "dl-life-canvas",
+   "group": "ai",
+   "file": "src/components/LifeAreaPage.tsx",
+   "line": 526,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"mt-4 min-h-36 w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-6 text-muted-foreground outline-none placeholder:text-muted-foreground\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/section2/Confirmation.tsx",
+   "line": 36,
+   "rule": "ui/neon-glow",
+   "evidence": "boxShadow: \"0 0 40px -6px oklch(0.6 0.24 292 / 0.75)\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/agenda.tsx",
+   "line": 4607,
+   "rule": "a11y/clickable-div",
+   "evidence": "<div",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/reset-password.tsx",
+   "line": 133,
+   "rule": "ui/ai-gradient",
+   "evidence": "style={{ background: \"radial-gradient(circle, oklch(0.55 0.25 290 / 0.5), transparent 60%)\" }}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "lumina-lovable-concept",
+   "group": "ai",
+   "file": "src/routes/pulse.tsx",
+   "line": 154,
+   "rule": "ui/gimmick-animation",
+   "evidence": "<div className=\"flex items-center gap-2 text-xs font-medium\"><span className={cn(\"size-2 rounded-full\", streaming ? \"bg-accent animate-pulse\" : \"bg-muted-foreground\")} />{streaming ? \"Live stream conn",
+   "verdict": "fp",
+   "note": "Pulsing dot is a real 'live stream' status indicator (conditional on state), not decoration."
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 3852,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "dl-life-canvas",
+   "group": "ai",
+   "file": "src/lib/capital-store.tsx",
+   "line": 1028,
+   "rule": "slop/empty-catch",
+   "evidence": "} catch {}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/professionals.tsx",
+   "line": 482,
+   "rule": "ui/emoji-icons",
+   "evidence": "{approvalMode === \"disabled\" && <>⚪ No cobra servicios</>}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 344,
+   "rule": "ui/neon-glow",
+   "evidence": "radial-gradient(circle at 78% 8%, rgba(79,125,255,0.18) 0%, transparent 35%),",
+   "verdict": "tp"
+  },
+  {
+   "repo": "usama-showcase-sparkle",
+   "group": "ai",
+   "file": "src/components/ProcessVisual.tsx",
+   "line": 40,
+   "rule": "ui/rainbow-palette",
+   "evidence": "",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Planner.tsx",
+   "line": 1004,
+   "rule": "a11y/icon-button",
+   "evidence": "<button",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/PrivacySettings.tsx",
+   "line": 32,
+   "rule": "slop/empty-catch",
+   "evidence": "if (next) void syncMySharedLibrary().catch(() => {});",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/dashboard/use-inicio-widgets.ts",
+   "line": 73,
+   "rule": "slop/ts-any",
+   "evidence": "setProximosTurnos(((proximosRes.data ?? []) as any[]) as ProximoTurno[]);",
+   "verdict": "tp"
+  },
+  {
+   "repo": "leadmachine-leadcatch-lovable",
+   "group": "ai",
+   "file": "src/routes/index.tsx",
+   "line": 99,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "<p className=\"text-xs uppercase tracking-[0.18em] text-muted-foreground\">{experience?.deskName ?? \"Revenue Desk\"}</p>",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Planner.tsx",
+   "line": 827,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => setActiveSlot(null)} className=\"h-9 w-9 rounded-full border border-border flex items-center justify-center shrink-0\"><ChevronLeft size={16} /></button>",
+   "verdict": "tp"
+  },
+  {
+   "repo": "commerce",
+   "group": "hand",
+   "file": "components/layout/search/filter/dropdown.tsx",
+   "line": 51,
+   "rule": "a11y/clickable-div",
+   "evidence": "<div",
+   "verdict": "fp",
+   "note": "Dropdown container closes on click via event delegation; items inside are the controls."
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/TripDetail.tsx",
+   "line": 1140,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"bg-secondary/60 rounded-full px-3 py-2.5 text-xs outline-none\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 351,
+   "rule": "ui/blur-blobs",
+   "evidence": "<div className=\"pointer-events-none absolute left-1/2 top-[-120px] z-[-1] h-[620px] w-screen -translate-x-1/2 bg-[radial-gradient(circle_at_17%_4%,rgb(139_92_246_/_0.28),transparent_40%),radial-gradie",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 3614,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => sub(it.id)} disabled={noStock && qty === 0}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/clients.tsx",
+   "line": 1278,
+   "rule": "ui/ai-gradient",
+   "evidence": "className=\"h-10 flex-1 rounded-xl bg-gradient-to-r from-sky-400 to-violet-500 text-sm font-semibold text-white disabled:opacity-50\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/date-range-picker.tsx",
+   "line": 265,
+   "rule": "ui/heavy-shadows",
+   "evidence": "className=\"fixed inset-x-3 top-1/2 z-50 max-h-[85vh] -translate-y-1/2 overflow-y-auto rounded-2xl shadow-2xl sm:absolute sm:inset-x-auto sm:top-full sm:left-0 sm:mt-2 sm:max-h-none sm:w-[288px] sm:tra",
+   "verdict": "fp",
+   "note": "Large shadow on a dialog/popover: the overlay case the rule itself allows."
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/cash-register/inventario-tab.tsx",
+   "line": 242,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => setModal({ product: p, direction: 1 })}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/lib/fichaje.ts",
+   "line": 58,
+   "rule": "slop/ts-any",
+   "evidence": ".from(\"branch_checkin_codes\" as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/AddItem.tsx",
+   "line": 1644,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"mt-1 w-full bg-transparent font-serif text-lg outline-none placeholder:text-muted-foreground/50\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisor.tsx",
+   "line": 3578,
+   "rule": "ui/blur-blobs",
+   "evidence": "<div className=\"pointer-events-none absolute -top-24 right-0 h-56 w-56 rounded-full bg-gradient-to-br from-cyan-500/15 to-transparent blur-3xl\" />",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/cash-register-liquidaciones-compacto.tsx",
+   "line": 745,
+   "rule": "ui/ai-gradient",
+   "evidence": "panelBg: \"bg-[radial-gradient(circle_at_12%_0%,rgba(59,130,246,0.09),transparent_38%),radial-gradient(circle_at_92%_0%,rgba(139,92,246,0.11),transparent_42%),linear-gradient(180deg,rgba(12,16,30,0.94)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/reservar/$slug.tsx",
+   "line": 1370,
+   "rule": "ui/ai-gradient",
+   "evidence": "<div className=\"mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 via-violet-500 to-fuchsia-500 text-2xl font-black text-white\">C</div>",
+   "verdict": "tp"
+  },
+  {
+   "repo": "leadmachine-leadcatch-lovable",
+   "group": "ai",
+   "file": "src/lib/quote-form-token.server.ts",
+   "line": 5,
+   "rule": "sec/hardcoded-credential",
+   "evidence": "const DEV_SECRET = \"***\";",
+   "verdict": "tp"
+  },
+  {
+   "repo": "taxonomy",
+   "group": "hand",
+   "file": "app/api/posts/[postId]/route.ts",
+   "line": 62,
+   "rule": "slop/placeholder-impl",
+   "evidence": "// TODO: Implement sanitization for content.",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/special-hours-editor.tsx",
+   "line": 420,
+   "rule": "ui/ai-gradient",
+   "evidence": "className=\"inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-400 to-violet-500 text-white font-semibold px-3 py-1.5 text-xs\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/lib/outfit-plan-slot.ts",
+   "line": 66,
+   "rule": "slop/ts-any",
+   "evidence": "const { data, error } = await (supabase.from(\"calendar_events_cache\" as never) as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/professionals/fichaje-admin-summary-card.tsx",
+   "line": 75,
+   "rule": "ui/ai-gradient",
+   "evidence": "className=\"rounded-xl bg-gradient-to-r from-sky-400 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/Section3.tsx",
+   "line": 159,
+   "rule": "ui/ai-gradient",
+   "evidence": "\"radial-gradient(70% 55% at 20% 85%, oklch(0.5 0.2 292 / 0.14), transparent 60%)\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/SavedOutfits.tsx",
+   "line": 215,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"w-full bg-secondary/60 rounded-full px-4 py-2.5 text-sm outline-none\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/OutfitPreviewSheet.tsx",
+   "line": 214,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"w-full bg-secondary/60 rounded-full px-4 py-3 text-sm outline-none\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/SectionUpsell.tsx",
+   "line": 100,
+   "rule": "ui/ai-gradient",
+   "evidence": "\"radial-gradient(38% 55% at 82% 55%, oklch(0.5 0.24 292 / 0.18), transparent 68%)\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/agenda/appointment-dialog.tsx",
+   "line": 1113,
+   "rule": "ui/rainbow-palette",
+   "evidence": "",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/EssentialPresets.tsx",
+   "line": 258,
+   "rule": "a11y/focus-removed",
+   "evidence": "className=\"flex-1 bg-secondary/40 rounded-full px-4 py-2 text-sm outline-none placeholder:text-muted-foreground\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/lib/shared-library.functions.ts",
+   "line": 55,
+   "rule": "slop/ts-any",
+   "evidence": "let builder = (context.supabase as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/TripCreate.tsx",
+   "line": 168,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => go(\"trips\")} className=\"h-10 w-10 rounded-full border border-border flex items-center justify-center active:scale-90\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisorl.tsx",
+   "line": 387,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "\"text-xs font-semibold uppercase tracking-[0.25em]\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "dl-life-canvas",
+   "group": "ai",
+   "file": "src/routes/assets.tsx",
+   "line": 61,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "<span className=\"inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider border border-[color:var(--gold)]/40 text-[color:var(--gold)]\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/auro-stylo.tsx",
+   "line": 61,
+   "rule": "ui/neon-glow",
+   "evidence": "style={{ background: \"radial-gradient(closest-side, rgba(56,132,255,0.3), transparent)\" }}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/auth/forgot-password-modal.tsx",
+   "line": 139,
+   "rule": "ui/ai-gradient",
+   "evidence": "background: \"linear-gradient(135deg, oklch(0.65 0.24 255), oklch(0.65 0.28 305))\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/special-hours-editor.tsx",
+   "line": 222,
+   "rule": "ui/glassmorphism",
+   "evidence": "className=\"fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4\"",
+   "verdict": "fp",
+   "note": "backdrop-blur on a modal backdrop (fixed inset-0): the single overlay the rule allows."
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Settings.tsx",
+   "line": 46,
+   "rule": "slop/empty-catch",
+   "evidence": "checkAdmin().then((r) => { if (alive) setReportAdmin(r.admin); }).catch(() => {});",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/reports.tsx",
+   "line": 240,
+   "rule": "ui/ai-gradient",
+   "evidence": "\"linear-gradient(90deg, oklch(0.65 0.24 255), oklch(0.65 0.28 305))\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/agenda.tsx",
+   "line": 1232,
+   "rule": "ui/ai-gradient",
+   "evidence": "<div className=\"pointer-events-none absolute left-1/2 top-[-120px] z-[-1] h-[620px] w-screen -translate-x-1/2 bg-[radial-gradient(circle_at_17%_4%,rgb(139_92_246_/_0.34),transparent_38%),radial-gradie",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Home.tsx",
+   "line": 170,
+   "rule": "slop/ts-any",
+   "evidence": "const { data: cached } = await (supabase.from(\"home_suggestions\" as never) as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/equipo-section.tsx",
+   "line": 3281,
+   "rule": "a11y/icon-button",
+   "evidence": "<button",
+   "verdict": "tp",
+   "note": "role=switch with no accessible name."
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/PrivacySettings.tsx",
+   "line": 39,
+   "rule": "a11y/icon-button",
+   "evidence": "<button onClick={() => go(\"settings\")} className=\"h-10 w-10 rounded-full border border-border flex items-center justify-center active:scale-90\">",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/DetectedItemCard.tsx",
+   "line": 117,
+   "rule": "ui/eyebrow-labels",
+   "evidence": "<p className=\"text-[10px] uppercase tracking-[0.3em] text-muted-foreground\">{t(\"detectedItem.category\")}</p>",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/components/aura/screens/Wardrobe.tsx",
+   "line": 1090,
+   "rule": "ui/emoji-icons",
+   "evidence": "🎨 {t(\"wardrobe.colorHarmonyButton\")}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/reservar/$slug.tsx",
+   "line": 660,
+   "rule": "slop/ts-any",
+   "evidence": ".from(\"public_booking_branches\" as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/advisorl.tsx",
+   "line": 627,
+   "rule": "slop/duplicate-function",
+   "evidence": "function useResultAnimation(enabled = false) {",
+   "verdict": "tp",
+   "note": "useResultAnimation is byte-identical in advisor.tsx and advisorl.tsx."
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/equipo-section.tsx",
+   "line": 2702,
+   "rule": "ui/ai-gradient",
+   "evidence": "? \"bg-gradient-to-r from-sky-400 to-violet-500 text-white shadow-lg shadow-sky-500/20\"",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/landing-demo/section2/ProfessionalPicker.tsx",
+   "line": 76,
+   "rule": "ui/neon-glow",
+   "evidence": "\"shadow-[0_0_16px_-2px_oklch(0.6_0.24_292/0.7)]\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "leadmachine-leadcatch-lovable",
+   "group": "ai",
+   "file": "scripts/browser-e2e.mjs",
+   "line": 1,
+   "rule": "deps/phantom-import",
+   "evidence": "import { chromium } from \"playwright\";",
+   "verdict": "tp",
+   "note": "Correct that `playwright` is undeclared in package.json; the 'may not exist' wording overstates it (package exists)."
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/routes/set-password.tsx",
+   "line": 143,
+   "rule": "ui/ai-gradient",
+   "evidence": "style={{ background: \"radial-gradient(circle, oklch(0.55 0.25 290 / 0.5), transparent 60%)\" }}",
+   "verdict": "tp"
+  },
+  {
+   "repo": "usama-showcase-sparkle",
+   "group": "ai",
+   "file": "src/pages/AdminScraper.tsx",
+   "line": 46,
+   "rule": "ui/emoji-icons",
+   "evidence": "toast({ title: '✅ Scrape complete', description: `Fetched ${data.repos.length} repos with READMEs` });",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/settings/branding-section.tsx",
+   "line": 125,
+   "rule": "ui/emoji-icons",
+   "evidence": "\"💳 Acepta tarjetas\",",
+   "verdict": "tp"
+  },
+  {
+   "repo": "aura-wardrobe-intelligence",
+   "group": "ai",
+   "file": "src/lib/weekly-outfits.functions.ts",
+   "line": 68,
+   "rule": "slop/ts-any",
+   "evidence": "const { data: profileRow } = await (supabase.from(\"profiles\" as never) as any)",
+   "verdict": "tp"
+  },
+  {
+   "repo": "clippr-v2-lovable",
+   "group": "ai",
+   "file": "src/components/liquidaciones/unified-row.tsx",
+   "line": 28,
+   "rule": "ui/arbitrary-color",
+   "evidence": "\"sticky top-0 z-10 hidden gap-3 rounded-t-xl border-b border-white/[0.07] bg-[#0A0D18] px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/38 sm:grid\",",
+   "verdict": "tp"
+  }
+ ]
+}

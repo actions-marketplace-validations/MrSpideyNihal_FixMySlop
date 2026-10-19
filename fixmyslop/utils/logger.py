@@ -13,20 +13,23 @@ def get_logger(name: str) -> logging.Logger:
         return logger  # Already configured
 
     logger.setLevel(logging.DEBUG)
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-    # File handler — DEBUG level
-    fh = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    ))
+    # File handler — DEBUG level. Skipped where the home directory is read-only (serverless functions,
+    # read-only containers): logging must never stop a scan.
+    try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        fh = logging.FileHandler(LOG_FILE, encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        ))
+        logger.addHandler(fh)
+    except OSError:
+        pass
 
     # Console handler — WARNING level (INFO goes to the log file only, keeping CLI output clean)
     ch = logging.StreamHandler()
     ch.setLevel(logging.WARNING)
     ch.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
-
-    logger.addHandler(fh)
     logger.addHandler(ch)
     return logger

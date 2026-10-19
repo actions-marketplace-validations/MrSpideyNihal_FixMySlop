@@ -8,7 +8,7 @@ from typing import Iterable
 
 from fixmyslop.core.slop.rule import (
     FileContext, Hit, rule, line_rule,
-    KIND_CODE, KIND_PYTHON, KIND_SCRIPT, KIND_TS, KIND_MARKUP, KIND_ANY,
+    KIND_CODE, KIND_PYTHON, KIND_SCRIPT, KIND_TS, KIND_MARKUP, KIND_ANY, KIND_DOC,
 )
 from fixmyslop.core.slop.rules_ui import EMOJI_RE
 from fixmyslop.macros import (
@@ -20,20 +20,40 @@ CODE = (KIND_CODE,)
 
 # ─── Agent artifacts ─────────────────────────────────────────────────────────
 
-line_rule(
-    "slop/elided-code", "AI-elided code (\"... existing code\")", SEVERITY_HIGH,
-    CATEGORY_AI_SMELL, (KIND_ANY,),
+_ELIDED_WORDED = re.compile(
+    r"\.\.\.\s*(?:rest of|the rest|existing|remaining|other|previous|same as|unchanged)\b"
+    r"|\b(?:rest of|remainder of) (?:the )?(?:code|implementation|file|component|function|class|methods?)"
+    r"\s*(?:remains?|stays?|is|unchanged|as before)"
+    r"|\b(?:existing|previous|original) (?:code|implementation|logic) (?:here|unchanged|remains|goes here)\b"
+    r"|\bkeep (?:the )?existing (?:code|implementation|logic)\b",
+    re.IGNORECASE)
+_ELIDED_BARE = re.compile(r"^\s*(?:#|//|/\*|\{/\*|<!--)\s*\.\.\.\s*(?:\*/\}?|-->)?\s*$")
+
+
+@rule(
+    "slop/elided-code", "AI-elided code (\"... existing code\")", SEVERITY_HIGH, CATEGORY_AI_SMELL, (KIND_ANY,),
     why="Comments like '// ... existing code ...' are what a model writes when it skips part of a "
         "file. When they land in the file itself, real code has been deleted.",
     fix="Restore the missing code from version control (git diff / git log -p) and remove the marker.",
-    pattern=r"^\s*(?:#|//|/\*|\{/\*|<!--)\s*\.\.\.\s*(?:\*/\}?|-->)?\s*$"
-            r"|\.\.\.\s*(?:rest of|the rest|existing|remaining|other|previous|same as|unchanged)\b"
-            r"|\b(?:rest of|remainder of) (?:the )?(?:code|implementation|file|component|function|class|methods?)"
-            r"\s*(?:remains?|stays?|is|unchanged|as before)"
-            r"|\b(?:existing|previous|original) (?:code|implementation|logic) (?:here|unchanged|remains|goes here)\b"
-            r"|\bkeep (?:the )?existing (?:code|implementation|logic)\b",
-    scope="comment",
 )
+def check_elided_code(ctx: FileContext) -> Iterable[Hit]:
+    """Worded elision markers anywhere in comments; a bare `// ...` only between lines of real code."""
+    if KIND_DOC in ctx.kinds:
+        return
+    def neighbour_is_code(n: int, step: int) -> bool:
+        m = n + step
+        while 1 <= m <= len(ctx.lines) and not ctx.line_text(m).strip():
+            m += step
+        return 1 <= m <= len(ctx.lines) and not ctx.is_comment(m)
+
+    for n in sorted(ctx.comment_lines):
+        line = ctx.line_text(n)
+        match = _ELIDED_WORDED.search(line)
+        if match:
+            yield Hit(n, line.strip(), match.group(0))
+        elif _ELIDED_BARE.match(line) and neighbour_is_code(n, -1) and neighbour_is_code(n, 1):
+            yield Hit(n, line.strip(), "...")
+
 
 line_rule(
     "slop/placeholder-impl", "\"In a real app…\" placeholder logic", SEVERITY_MEDIUM,
@@ -49,8 +69,10 @@ line_rule(
             r"|\breplace (?:this )?with (?:your|the|an?) (?:actual|real|own)\b"
             r"|\b(?:implementation|logic|code) (?:goes|would go) here\b"
             r"|\badd (?:your|more|actual|real) (?:logic|implementation|code|validation) here\b"
-            r"|\bTODO:?\s*(?:implement|add (?:real|actual|proper)|replace (?:with|this))\b"
+            r"|\bTODO:?\s*(?:add (?:real|actual|proper)|replace (?:with|this) (?:with )?(?:real|actual))\b"
             r"|\bthis would (?:normally|typically)\b"
+            r"|\bkeep(?:ing)? (?:it|this|things) simple for now\b"
+            r"|\bfor now,? (?:we |I )?(?:just |simply )?(?:return|hardcode|hard-code|assume|use a (?:fixed|static|dummy))\b"
             r"|\byou (?:would|might|may|could|should) (?:want to |need to )?(?:add|implement|replace|use a real)\b",
     scope="comment", skip_tests=True,
 )
@@ -163,7 +185,7 @@ line_rule(
     "slop/empty-catch", "Empty catch block", SEVERITY_MEDIUM, CATEGORY_AI_SMELL, (KIND_SCRIPT,),
     why="An empty catch silently drops errors (failed requests, bad JSON) and the UI just shows nothing.",
     fix="Handle the error: surface it to the user, log it, or rethrow. Don't catch what you can't handle.",
-    pattern=r"\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}|\.catch\(\s*\(\s*\w*\s*\)\s*=>\s*(?:\{\s*\}|null|undefined)\s*\)",
+    pattern=r"\bcatch\s*(?:\([^)]*\))?\s*\{\s*\}|\.catch\(\s*\(\s*\w*\s*\)\s*=>\s*\{\s*\}\s*\)",
 )
 
 # ─── Debug leftovers ─────────────────────────────────────────────────────────
@@ -199,7 +221,7 @@ line_rule(
     "slop/ts-any", "`any` type", SEVERITY_LOW, CATEGORY_AI_SMELL, (KIND_TS,),
     why="`any` switches off the type checker — the reason you're using TypeScript.",
     fix="Use the real type, `unknown` + narrowing, or a generic.",
-    pattern=r":\s*any\b(?!-)|\bas any\b|<any>|\bany\[\]", flags=0,
+    pattern=r":\s*any\b(?=\s*(?:[;,)=>\]|&}]|$))|\bas any\b|<any>|\bany\[\]", flags=0,
     skip_tests=True, project_threshold=5, aggregate_per_file=True,
 )
 
@@ -302,7 +324,11 @@ def check_narrating_comment(ctx: FileContext) -> Iterable[Hit]:
     fix="Delete the step labels; extract well-named functions if the steps are genuinely distinct.",
 )
 def check_step_comments(ctx: FileContext) -> Iterable[Hit]:
-    """Flag files with 3+ 'Step N:' comments."""
+    """Flag files with 3+ 'Step N:' comments.
+
+    Plain numbered comments ('// 1. Load .env (lowest priority)') are not flagged: humans use them to
+    document precedence and fallback order, and they look the same as AI narration.
+    """
     steps = [
         n for n in ctx.comment_lines
         if re.match(r"^\W*step\s+\d+\s*[:.)\-]", _COMMENT_PREFIX.sub("", ctx.line_text(n)), re.IGNORECASE)

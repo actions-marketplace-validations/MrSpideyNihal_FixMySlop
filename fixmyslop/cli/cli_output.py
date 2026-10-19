@@ -294,7 +294,8 @@ def print_slop_report(report, relpath, limit: int = 60, fixable_count: int = 0,
     summary.append(f" grade {report.grade or '-'}", style=grade_style)
     summary.append(
         f"   {len(report.issues)} issues · {report.scanned_files} files · "
-        f"{report.lines_scanned:,} lines · {report.scan_time_s:.2f}s",
+        f"{report.lines_scanned:,} lines · {report.scan_time_s:.2f}s"
+        + (f" · {report.baselined} pre-existing hidden by baseline" if getattr(report, "baselined", 0) else ""),
         style="dim",
     )
     sev_line = Text()
@@ -305,8 +306,13 @@ def print_slop_report(report, relpath, limit: int = 60, fixable_count: int = 0,
     body = Text("\n").join([summary, sev_line, Text(cat_line, style="dim")]) if report.issues else summary
     console.print(Panel(body, border_style=grade_style.split()[-1], title="FixMySlop", title_align="left"))
 
+    if not report.scanned_files:
+        console.print("[bold yellow]Nothing was scanned.[/bold yellow] No supported files found here "
+                      "(HTML, CSS, JS/TS, JSX/TSX, Vue, Svelte, Astro, Python, …). Check the path.\n")
+        return
     if not report.issues:
-        console.print("[bold green]Clean.[/bold green] Nothing to fix.\n")
+        console.print("[bold green]Clean.[/bold green] "
+                      + ("No new slop since the baseline.\n" if getattr(report, "baselined", 0) else "Nothing to fix.\n"))
         return
     console.print("[bold]Next[/bold]")
     steps = Table.grid(padding=(0, 3))

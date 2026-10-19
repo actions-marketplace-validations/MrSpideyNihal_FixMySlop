@@ -88,3 +88,4 @@ class ScanReport:
     lines_scanned: int = 0
     grade: str = ""
     design_context: str = ""    # the project's design tokens, for agent fix briefs
+    baselined: int = 0          # pre-existing issues hidden by .fixmyslop-baseline.json

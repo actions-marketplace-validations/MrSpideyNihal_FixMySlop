@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fixmyslop"
-version = "0.4.0"
+version = "0.6.7"
 description = "The slop linter for the AI-agent era: catch AI slop in UI and code in milliseconds, then let your agent fix it."
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gui = ["PyQt5>=5.15.10"]
+gui = []   # the app is now `fixmyslop ui` (browser-based, no extra dependencies)
 analysis = ["ruff>=0.4.0", "bandit>=1.7.0"]
 dev = ["pytest>=8.0.0"]
 
@@ -49,7 +49,7 @@ where = ["."]
 include = ["fixmyslop*"]
 
 [tool.setuptools.package-data]
-fixmyslop = ["ui/assets/styles/*.qss"]
+fixmyslop = ["web/*.html"]
 
 [tool.ruff]
 line-length = 100

@@ -309,3 +309,278 @@ def test_colored_radial_glow_any_hue(tmp_path):
     assert "ui/neon-glow" in scan(tmp_path / "a", "a.css", glow * 2)
     mask = '.fade { mask-image: radial-gradient(circle, #000 50%, transparent 80%); }\n'
     assert "ui/neon-glow" not in scan(tmp_path / "b", "a.css", mask * 2)
+
+
+def test_icon_button_accepts_non_english_labels(tmp_path):
+    """A button with a visible label in any language is not icon-only (found on a Russian-language app)."""
+    code = "<button onClick={signOut}>\n  <LogOut className=\"h-4 w-4\" />\n  <span>Выйти</span>\n</button>\n"
+    assert "a11y/icon-button" not in scan(tmp_path, "Shell.tsx", code)
+
+
+def test_design_tokens_are_not_palette_sprawl(tmp_path):
+    """Hex colors defined as CSS variables are the design system; only raw usage counts as sprawl."""
+    tokens = "".join(f"  --c{n}: #{n:02x}{n:02x}{n:02x};\n" for n in range(40))
+    assert "ui/palette-sprawl" not in scan(tmp_path / "a", "theme.css", ":root {\n" + tokens + "}\n")
+    raw = "".join(f".c{n} {{ color: #{n:02x}{n:02x}{n:02x}; }}\n" for n in range(40))
+    assert "ui/palette-sprawl" in scan(tmp_path / "b", "theme.css", raw)
+
+
+
+# ─── Found on a real single-file AI page (room booking site) that scanned as "A" ─────────
+
+def test_single_file_page_with_long_lines_is_scanned(tmp_path):
+    """AI pages often put all CSS on a few huge lines; that must not be mistaken for a minified bundle."""
+    from fixmyslop.core.scanner import Scanner
+    css = "".join(f".c{n}{{color:#{n:06x};padding:{n}px}}" for n in range(400))
+    page = tmp_path / "booking.html"
+    page.write_text(f"<style>\n{css}\n</style>\n<a href=\"#\">x</a>\n", encoding="utf-8")
+    assert [p.name for p, _ in Scanner(str(tmp_path)).scan()] == ["booking.html"]
+    bundle = tmp_path / "vendor.js"
+    bundle.write_text("var a=1;" * 2000, encoding="utf-8")
+    assert "vendor.js" not in [p.name for p, _ in Scanner(str(tmp_path)).scan()]
+
+
+def test_css_universal_selector_line_is_not_a_comment(tmp_path):
+    line = "*{box-sizing:border-box}body{font-family:Inter,sans-serif}.field input{outline:0}\n"
+    found = scan(tmp_path, "page.html", "<style>\n" + line + "</style>\n")
+    assert "a11y/focus-removed" in found and "ui/default-font" in found
+
+
+@pytest.mark.parametrize("rule_id, sloppy, clean", [
+    ("ui/fake-social-proof", "<span>Loved by <strong>2,400+ happy travelers</strong></span>",
+     '<select><option value="5">5+ guests</option></select>'),
+    ("ui/fake-ratings", "const stays=[{name:'Loft',rating:'4.96',reviews:84}];",
+     "const stays = await fetchStays();"),
+    ("ui/fake-feature", "button.onclick = () => alert('Sign-in preview: connect your authentication provider here.');",
+     "button.onclick = () => signIn();"),
+    ("ui/two-tone-headline", "<style>.hero h1 em{color:#63845c}</style>\n<h1>Find a place<br>to <em>feel at home.</em></h1>",
+     "<h1>Rooms in Pune from ₹950 a night</h1>"),
+    ("ui/emoji-icons", '<span class="logo">⌂</span><span>✦ Handpicked</span>\n<p>✿</p>\n<p>⌖ Pune</p>\n',
+     "<kbd>⌘K</kbd>\n"),
+])
+def test_room_booking_patterns(tmp_path, rule_id, sloppy, clean):
+    assert rule_id in scan(tmp_path / "bad", "page.html", sloppy + "\n")
+    assert rule_id not in scan(tmp_path / "good", "page.html", clean + "\n")
+
+
+def test_aphorism_lovely_little_stays_voice(tmp_path):
+    copy = "<p>Stays with soul</p>\n<p>Made for the way you want to travel.</p>\n<p>Good stays. Good stories.</p>\n"
+    assert scan(tmp_path, "page.html", copy).count("ui/aphorism-copy") == 3
+
+
+def test_placeholders_are_not_fake_testimonials(tmp_path):
+    form = '<input placeholder="Jane Doe" />\n<input placeholder="Acme Inc." />\n'
+    assert "ui/fake-social-proof" not in scan(tmp_path, "Form.tsx", form)
+
+
+# ─── backend rules ───────────────────────────────────────────────────────────
+
+def test_empty_tests_python_and_js(tmp_path):
+    py = ("def test_creates_user():\n    create_user('a')\n\n"
+          "def test_always_true():\n    assert True\n\n"
+          "def test_real():\n    assert create_user('a').name == 'a'\n\n"
+          "def test_raises():\n    with pytest.raises(ValueError):\n        create_user('')\n")
+    found = [i for i in scan(tmp_path / "py", "tests/test_users.py", py) if i == "slop/empty-test"]
+    assert len(found) == 2
+    js = ("it('renders', () => {\n  render(<App />);\n});\n"
+          "it('shows title', () => {\n  render(<App />);\n  expect(screen.getByText('Hi')).toBeTruthy();\n});\n")
+    assert scan(tmp_path / "js", "src/App.test.tsx", js).count("slop/empty-test") == 1
+    assert "slop/empty-test" not in scan(tmp_path / "app", "src/users.py", py)   # only in test files
+
+
+def test_duplicate_functions_across_files(tmp_path):
+    body = ("    total = 0\n    for item in items:\n        if item.active:\n            total += item.price\n"
+            "    if total > 100:\n        total = total * 0.9\n    return round(total, 2)\n")
+    (tmp_path / "a.py").write_text("def order_total(items):\n" + body, encoding="utf-8")
+    renamed = body.replace("total", "amount").replace("items", "rows").replace("item", "row")
+    (tmp_path / "b.py").write_text("def cart_sum(rows):\n" + renamed, encoding="utf-8")
+    engine = SlopEngine(tmp_path)
+    for name in ("a.py", "b.py"):
+        engine.check_file(tmp_path / name, (tmp_path / name).read_text(encoding="utf-8"))
+    dupes = [i for i in engine.finalize() if i.rule_id == "slop/duplicate-function"]
+    assert len(dupes) == 1 and "order_total" in dupes[0].description
+
+
+def test_pointless_wrappers_need_repetition(tmp_path):
+    wrappers = "".join(f"def get_{n}(x):\n    return fetch_{n}(x)\n\n" for n in range(3))
+    assert "slop/pointless-wrapper" in scan(tmp_path / "a", "svc.py", wrappers)
+    assert "slop/pointless-wrapper" not in scan(tmp_path / "b", "svc.py", "def get(x):\n    return fetch(x)\n")
+
+
+@pytest.mark.parametrize("rule_id, name, sloppy, clean", [
+    ("slop/catch-rethrow", "a.py", "try:\n    run()\nexcept ValueError as e:\n    raise e\n",
+     "try:\n    run()\nexcept ValueError as e:\n    raise RuntimeError('run failed') from e\n"),
+    ("slop/catch-rethrow-js", "a.ts", "try { run() } catch (e) { throw e }", "try { run() } catch (e) { throw new Error(`run: ${e}`) }"),
+    ("slop/ignored-error", "main.go", "if err != nil {\n}\n".replace("\n}", " }"), "if err != nil { return err }"),
+    ("slop/ignored-error", "main.go", "if err != nil { return nil }", "if err != nil { return fmt.Errorf(\"load: %w\", err) }"),
+    ("slop/empty-catch", "Main.java", "try { run(); } catch (IOException e) {}", "try { run(); } catch (IOException e) { log.error(\"run\", e); }"),
+    ("slop/print-stacktrace", "Main.java", "try { run(); } catch (Exception e) { e.printStackTrace(); }",
+     "try { run(); } catch (Exception e) { throw new RuntimeException(e); }"),
+])
+def test_backend_rules(tmp_path, rule_id, name, sloppy, clean):
+    assert rule_id in scan(tmp_path / "bad", name, sloppy + "\n")
+    assert rule_id not in scan(tmp_path / "good", name, clean + "\n")
+
+
+def test_empty_test_understands_helpers_and_smoke_tests(tmp_path):
+    js = ('const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9);\n'
+          'test("unit prices", () => {\n  close(price(3), 0.225);\n});\n'
+          'test("recording never throws", async () => {\n  await record();\n});\n')
+    assert "slop/empty-test" not in scan(tmp_path / "js", "src/usage.test.ts", js)
+    py = ("def check_user(u):\n    assert u.id\n\n"
+          "def test_create():\n    check_user(create())\n\n"
+          "def test_import_does_not_raise():\n    import app\n")
+    assert "slop/empty-test" not in scan(tmp_path / "py", "tests/test_users.py", py)
+
+
+def test_syntax_rules_ignore_text_in_python(tmp_path):
+    doc = 'GUIDE = "Never swallow errors: no `catch {}`, no `if err != nil { return nil }`."\n'
+    found = scan(tmp_path, "guide.py", doc)
+    assert "slop/empty-catch" not in found and "slop/ignored-error" not in found
+
+
+# ─── precision fixes from the hand-reviewed benchmark sample ────────────────
+
+@pytest.mark.parametrize("rule_id, name, not_slop", [
+    ("a11y/clickable-div", "M.tsx", '<div className="fixed inset-0 bg-black/60" onClick={close}>\n'),
+    ("a11y/clickable-div", "M.tsx", "<div className=\"rounded-2xl\" onClick={(e) => e.stopPropagation()}>\n"),
+    ("a11y/icon-button", "N.tsx", '<Button asChild size="icon">\n  <Link to="/x" aria-label="Partners"><Icon /></Link>\n</Button>\n'),
+    ("a11y/focus-removed", "C.tsx", '"relative flex items-center outline-none aria-selected:bg-accent"\n'),
+    ("slop/empty-catch", "api.ts", "const body = await request.json().catch(() => null);\n"),
+    ("slop/ts-any", "p.ts", 'const p = "- code: any article number printed on the label";\n' * 6),
+])
+def test_benchmark_false_positives_stay_fixed(tmp_path, rule_id, name, not_slop):
+    assert rule_id not in scan(tmp_path, name, not_slop)
+
+
+def test_generated_files_are_not_judged(tmp_path):
+    gen = "/* eslint-disable */\n// This file was automatically generated by TanStack Router.\nexport const x: any = 1;\n"
+    assert scan(tmp_path, "src/routeTree.gen.ts", gen) == []
+
+
+def test_overlays_may_blur_and_cast_big_shadows(tmp_path):
+    overlay = '<div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />\n' * 4
+    assert "ui/glassmorphism" not in scan(tmp_path / "a", "M.tsx", overlay)
+    dialog = '<div className="fixed inset-x-3 top-1/2 rounded-2xl shadow-2xl" />\n' * 9
+    assert "ui/heavy-shadows" not in scan(tmp_path / "b", "M.tsx", dialog)
+    cards = '<div className="rounded-xl bg-white/10 backdrop-blur-lg shadow-2xl" />\n' * 9
+    found = scan(tmp_path / "c", "Cards.tsx", cards)
+    assert "ui/glassmorphism" in found and "ui/heavy-shadows" in found
+
+
+def test_registry_lookup_streams_and_retries(monkeypatch, tmp_path):
+    """--online must not download multi-MB package metadata, and must survive one network blip."""
+    import requests
+    from fixmyslop.core.slop.rules_deps import DependencyIndex
+    calls = []
+
+    class Response:
+        def __init__(self, status):
+            self.status_code = status
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def fake_get(url, **kwargs):
+        calls.append((url, kwargs.get("stream")))
+        if "flaky" in url and len([c for c in calls if "flaky" in c[0]]) == 1:
+            raise requests.ConnectionError("blip")
+        return Response(404 if "made-up" in url else 200)
+
+    monkeypatch.setattr(requests, "get", fake_get)
+    index = DependencyIndex(tmp_path, online=True)
+    assert index.exists_on_registry("made-up-pkg", "npm") is False
+    assert index.exists_on_registry("flaky-pkg", "npm") is True        # retried after the blip
+    assert index.exists_on_registry("requests", "pypi") is True
+    assert all(stream for _, stream in calls)
+    assert any("pypi.org/simple/requests" in url for url, _ in calls)
+
+
+def test_metacall_false_positives_stay_fixed(tmp_path):
+    """Found scanning metacall/deploy: hand-written code that must not be flagged."""
+    js = ("import { ok, strictEqual as eq } from 'assert';\n"
+          "describe('deploy', () => {\n"
+          "  it('parses args', () => {\n"
+          "    const args = parse(['--dev']);\n"
+          "    eq(args.dev, true);\n"
+          "  });\n"
+          "  it('works', () => { ok(run()); });\n"
+          "});\n")
+    assert "slop/empty-test" not in scan(tmp_path / "a", "src/test/cli.spec.ts", js)
+
+    commented = ("const main = () => {\n"
+                 "  run();\n"
+                 "};\n"
+                 "// const old = () => {\n"
+                 "// ...\n"
+                 "// };\n"
+                 "main();\n")
+    assert "slop/elided-code" not in scan(tmp_path / "b", "hooks/pre-push.js", commented)
+
+    elided = "function save() {\n  validate();\n  // ...\n  persist();\n}\n"
+    assert "slop/elided-code" in scan(tmp_path / "c", "src/save.js", elided)
+
+    todo = "export async function poll() {\n  // TODO: Implement polling with waitFor\n  return fetchStatus();\n}\n"
+    assert "slop/placeholder-impl" not in scan(tmp_path / "d", "src/logs.ts", todo)
+
+
+def test_more_languages_are_scanned(tmp_path):
+    ruby = "def total(items)\n  sum = 0\n  # ... existing code ...\n  sum\nend\n"
+    assert "slop/elided-code" in scan(tmp_path / "rb", "lib/total.rb", ruby)
+    dart = "void load() {\n  try {\n    fetch();\n  } catch (e) {}\n}\n"
+    assert "slop/empty-catch" in scan(tmp_path / "dart", "lib/load.dart", dart)
+    groovy = "def load() {\n  try { run() } catch (Exception e) { e.printStackTrace() }\n}\n"
+    assert "slop/print-stacktrace" in scan(tmp_path / "groovy", "src/Load.groovy", groovy)
+
+
+ENV = ("# Supabase\n"
+       "SUPABASE_URL=https://abcd.supabase.co\n"
+       "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.c2VydmljZV9yb2xl\n"
+       "DATABASE_URL=postgres://admin:hunter2pass@db.example-prod.io:5432/app\n"
+       "PORT=3000\n")
+
+
+def test_env_secret_in_a_file_git_will_commit(tmp_path):
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    assert "sec/env-secret" in scan(tmp_path, ".env", ENV)
+    # ignored by git: the normal, safe setup
+    (tmp_path / ".gitignore").write_text(".env*\n!.env.example\n", encoding="utf-8")
+    assert "sec/env-secret" not in scan(tmp_path, ".env", ENV)
+    # templates hold placeholders and are meant to be committed
+    template = "OPENAI_API_KEY=your-openai-key\nDATABASE_URL=postgres://user:pass@localhost:5432/app\n"
+    assert "sec/env-secret" not in scan(tmp_path, ".env.example", template)
+    assert "sec/env-secret" not in scan(tmp_path / "local", ".env",
+                                        "DATABASE_URL=postgres://postgres:postgres@localhost:5432/dev\n")
+
+
+def test_env_public_by_design_keys_stay_quiet(tmp_path):
+    """Lovable/Supabase apps commit browser keys on purpose; that's not a leak."""
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    lovable = ('SUPABASE_PROJECT_ID="nwoxhqzlmabcdefghijk"\n'
+               'SUPABASE_PUBLISHABLE_KEY="sb_publishable_AbCdEfGhIjKlMnOpQrStUv"\n'
+               'VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YW5vbg"\n'
+               'VITE_SUPABASE_URL="https://nwoxhqzlmabcdefghijk.supabase.co"\n'
+               'VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY="AIzaSyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q"\n')
+    found = scan(tmp_path, ".env", lovable)
+    assert "sec/env-secret" not in found and "sec/leaked-key" not in found
+    assert "sec/env-secret" in scan(tmp_path, ".env", lovable + "STRIPE_SECRET_KEY=rk_live_51HxyzAbcdEfgh\n")
+
+
+def test_env_files_are_scanned_and_public_secrets_flagged(tmp_path):
+    from fixmyslop.core.scanner import Scanner
+    found = scan(tmp_path, ".env.local", "NEXT_PUBLIC_OPENAI_API_KEY=sk-proj-abc\nNEXT_PUBLIC_SITE=https://x.dev\n")  # fixmyslop-ignore[sec/public-env-secret]: test fixture
+    assert "sec/public-env-secret" in found
+    names = {p.name for p in Scanner(str(tmp_path)).files()}
+    assert ".env.local" in names
+    (tmp_path / "env.ts").write_text("export const env = {}\n", encoding="utf-8")
+    assert "slop/elided-code" not in scan(tmp_path, "env.ts", "export const env = {}\n")
+
+
+def test_placeholder_keep_it_simple_for_now(tmp_path):
+    code = "export function windowName() {\n  // Native bindings would give the real window; keeping it simple for now\n  return 'Desktop';\n}\n"
+    assert "slop/placeholder-impl" in scan(tmp_path, "src/window.ts", code)

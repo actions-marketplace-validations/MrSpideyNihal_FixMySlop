@@ -2,7 +2,7 @@
 
 ```bash
 npx fixmyslop scan            # find AI slop in your UI and code
-npx fixmyslop scan --open     # interactive report with copy-to-agent fix prompts
+npx fixmyslop ui              # the app in your browser: issues, fixes, prompts for your agent
 npx fixmyslop init --claude   # make Claude Code check its own work
 ```
 

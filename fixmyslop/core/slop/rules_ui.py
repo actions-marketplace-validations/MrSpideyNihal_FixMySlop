@@ -121,7 +121,8 @@ def check_gradient_text(ctx: FileContext) -> Iterable[Hit]:
 
 EMOJI_RE = re.compile(
     "[\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF"
-    "\U0001F900-\U0001F9FF\U0001FA70-\U0001FAFF☀-⛿✅❌✨⭐]"
+    "\U0001F900-\U0001F9FF\U0001FA70-\U0001FAFF\u2600-\u26FF\u2705\u274C\u2728\u2B50"
+    "\u2726\u2727\u273F\u2740\u2302\u2315\u2316]"   # incl. ✦ ✧ ✿ ❀ ⌂ ⌕ ⌖ used as icons; not ⌘ ⌥ ⏎
 )
 
 
@@ -151,8 +152,8 @@ line_rule(
         "aesthetic; it costs GPU and usually lowers contrast.",
     fix="Use opaque surfaces from the theme for cards and panels. Keep blur for at most one overlay "
         "(e.g. a sticky header) if the design calls for it.",
-    pattern=r"backdrop-blur[\w-]*[^\n]*\b(?:bg|border)-(?:white|black|slate-\d+|gray-\d+)/\d+"
-            r"|\b(?:bg|border)-(?:white|black)/\d+[^\n]*backdrop-blur|backdrop-filter:\s*blur",
+    pattern=r"^(?![^\n]*\bfixed\b[^\n]*\binset-0\b)[^\n]*(?:backdrop-blur[\w-]*[^\n]*\b(?:bg|border)-(?:white|black|slate-\d+|gray-\d+)/\d+"
+            r"|\b(?:bg|border)-(?:white|black)/\d+[^\n]*backdrop-blur|backdrop-filter:\s*blur)",
     aggregate_per_file=True, skip_tests=True, project_threshold=3,
 )
 
@@ -162,7 +163,7 @@ line_rule(
         "copied from AI templates.",
     fix="Delete the decorative blob elements. If the section needs depth, use spacing, a border, or a "
         "single subtle background tint.",
-    pattern=r"(?=[^\n]*\bblur-(?:2xl|3xl|\[\d{2,}px\]))(?=[^\n]*\b(?:rounded-full|absolute)\b)"
+    pattern=r"^(?=[^\n]*\bblur-(?:2xl|3xl|\[\d{2,}px\]))(?=[^\n]*\b(?:rounded-full|absolute)\b)"
             r"|filter:\s*blur\(\s*[4-9]\d+px",
     skip_tests=True,
 )
@@ -185,7 +186,7 @@ line_rule(
     pattern=r"\banimate-(?:bounce|ping)\b"
             r"|\banimation\s*:[^;]*\b(?:pulse|glow|breathe|float|shimmer|blink)\b[^;]*\binfinite\b"
             r"|\banimation\s*:[^;]*\binfinite\b[^;]*\b(?:pulse|glow|breathe|float|shimmer|blink)\b"
-            r"|(?=[^\n]*\banimate-pulse\b)(?=[^\n]*\brounded-full\b)(?=[^\n]*\b(?:h|size)-(?:1|1\.5|2)\b)",
+            r"|^(?=[^\n]*\banimate-pulse\b)(?=[^\n]*\brounded-full\b)(?=[^\n]*\b(?:h|size)-(?:1|1\.5|2)\b)",
     skip_tests=True,
 )
 
@@ -195,7 +196,7 @@ line_rule(
         "everything floats.",
     fix="Use one elevation scale from the theme. Most cards need a 1px border or shadow-sm; reserve "
         "large shadows for overlays (dialogs, popovers).",
-    pattern=r"\bshadow-(?:xl|2xl)\b",
+    pattern=r"^(?![^\n]*\bfixed\b)[^\n]*\bshadow-(?:xl|2xl)\b",
     aggregate_per_file=True, skip_tests=True, project_threshold=8,
 )
 
@@ -263,10 +264,13 @@ line_rule(
         "these. Shipping fabricated social proof is misleading and often legally risky.",
     fix="Remove invented numbers, ratings and testimonials. Only show metrics and quotes the user "
         "has provided; otherwise drop the section.",
-    pattern=r"\b\d{1,3}(?:[,.]\d{3})*[kKmM]?\+\s*(?:happy |active |satisfied |trusted )?"
-            r"(?:users|customers|developers|companies|teams|clients|downloads|businesses|creators)\b"
+    pattern=r"\b(?:\d{3,}|\d{1,3}(?:[,.]\d{3})+|\d+(?:\.\d)?[kKmM])\+\s*(?:happy |active |satisfied |trusted )?"
+            r"(?:users|customers|developers|companies|teams|clients|downloads|businesses|creators|travell?ers"
+            r"|guests|members|readers|students|learners|people|families|hosts|makers|shoppers|subscribers"
+            r"|founders|designers|freelancers|patients|investors|merchants|sellers|buyers|writers|marketers)\b"
             r"|\b99\.9+%|\b(?:john|jane) (?:doe|smith)\b|\bsarah (?:johnson|chen|williams|miller)\b"
             r"|\bacme (?:inc|corp|co)\b|★★★★★|\b4\.9\s*/\s*5\b|\btrusted by (?:thousands|millions|over)\b",
+    unless_inside=r"placeholder\s*=\s*(?:\"[^\"]*\"|'[^']*'|\{[^}]*\})",
     skip_tests=True,
 )
 
@@ -321,6 +325,10 @@ def check_clickable_div(ctx: FileContext) -> Iterable[Hit]:
             continue
         if re.search(r"\brole\s*=", attrs):
             continue
+        if re.search(r"(?:\bonClick|@click)\s*=\s*\{?\s*\(?\s*\w*\s*\)?\s*=>\s*\w+\.stopPropagation\(\)\s*\}?", attrs):
+            continue  # only stops propagation (dialog body inside a backdrop)
+        if re.search(r"\bfixed\b", attrs) and re.search(r"\binset-0\b", attrs):
+            continue  # click-outside-to-close backdrop; keyboard users close with Escape
         line = ctx.line_of(start)
         yield Hit(line, ctx.line_text(line).strip(), f"<{name}> with a click handler")
 
@@ -337,7 +345,7 @@ def check_icon_button(ctx: FileContext) -> Iterable[Hit]:
     for name, attrs, start, end in iter_tags(ctx, ("button", "Button")):
         if attrs.rstrip().endswith("/"):
             continue
-        if re.search(r"\b(?:aria-label|aria-labelledby|title|sr-only)\b|\{\s*\.\.\.", attrs):
+        if re.search(r"\b(?:aria-label|aria-labelledby|title|sr-only|asChild)\b|\{\s*\.\.\.", attrs):
             continue
         close = ctx.text.find(f"</{name}>", end)
         if close == -1 or close - end > 1500:
@@ -349,7 +357,7 @@ def check_icon_button(ctx: FileContext) -> Iterable[Hit]:
         if "<" not in inner:
             continue
         stripped = _strip_tags(inner)
-        if "{" in stripped or re.search(r"[A-Za-z0-9]", stripped.replace("&nbsp;", "")):
+        if "{" in stripped or re.search(r"[^\W_]", stripped.replace("&nbsp;", "")):  # any letter/digit, any script
             continue
         line = ctx.line_of(start)
         yield Hit(line, ctx.line_text(line).strip())
@@ -398,8 +406,9 @@ def check_dead_link(ctx: FileContext) -> Iterable[Hit]:
 def check_focus_removed(ctx: FileContext) -> Iterable[Hit]:
     """Flag outline removal that isn't paired with a focus style in the same class string."""
     file_has_focus_visible = "focus-visible" in ctx.text or ":focus" in ctx.text
-    focus_style = re.compile(r"\b(?:focus|focus-visible|focus-within|group-focus|peer-focus)[\w-]*:"
-                             r"(?:ring|outline|border|shadow|bg|underline)")
+    focus_style = re.compile(r"\b(?:focus|focus-visible|focus-within|group-focus|peer-focus|aria-selected"
+                             r"|data-\[(?:selected|highlighted|focus)[^\]]*\]|data-highlighted)[\w-]*:"
+                             r"(?:ring|outline|border|shadow|bg|underline|text)")
     for n, line in enumerate(ctx.lines, 1):
         if ctx.is_comment(n):
             continue
@@ -420,7 +429,7 @@ ARBITRARY_SIZE = re.compile(
 
 # ─── 2025–26 AI look: editorial dark-mode templates ─────────────────────────
 
-_TW_EYEBROW = re.compile(r"(?=[^\n]*\buppercase\b)(?=[^\n]*\btracking-(?:widest|wider|\[[0-9.]+(?:em|px|rem)\]))")
+_TW_EYEBROW = re.compile(r"^(?=[^\n]*\buppercase\b)(?=[^\n]*\btracking-(?:widest|wider|\[[0-9.]+(?:em|px|rem)\]))")
 
 
 @rule(
@@ -464,12 +473,16 @@ _ACCENT_SPAN = re.compile(
     skip_tests=True,
 )
 def check_two_tone_headline(ctx: FileContext) -> Iterable[Hit]:
-    """Flag h1/h2 elements containing an accent-colored span."""
+    """Flag h1/h2 elements containing an accent-colored span (by class, or styled via `h1 em {...}` CSS)."""
+    css_styled = set(re.findall(r"\b(h[12])\s+(em|i|span|strong|mark)\b[^{}]*\{[^}]*\b(?:color|font-family)\s*:",
+                                ctx.text, re.IGNORECASE))
     for name, _attrs, start, end in iter_tags(ctx, ("h1", "h2")):
         close = ctx.text.find(f"</{name}>", end)
         if close == -1 or close - end > 600:
             continue
-        if _ACCENT_SPAN.search(ctx.text[end:close]):
+        inner = ctx.text[end:close]
+        styled_child = any(heading == name and re.search(rf"<{child}[\s>]", inner) for heading, child in css_styled)
+        if _ACCENT_SPAN.search(inner) or styled_child:
             line = ctx.line_of(start)
             yield Hit(line, ctx.line_text(line).strip())
 
@@ -491,7 +504,15 @@ line_rule(
             r"|\bwithout\s+the\s+(?:noise|clutter|chaos|bloat|overwhelm)\b"
             r"|\bget\s+back\s+to\s+(?:your\s+life|what\s+matters)\b"
             r"|\b(?:thoughtfully|beautifully)\s+(?:designed|crafted|built)\b"
-            r"|\bcrafted\s+with\s+(?:care|intention)\b",
+            r"|\bcrafted\s+with\s+(?:care|intention)\b"
+            r"|\b(?:made|built|designed)\s+for\s+the\s+way\s+you\b"
+            r"|\bwith\s+(?:soul|heart|character)\b"
+            r"|\bworth\s+slowing\s+down\s+for\b"
+            r"|\bdeserves?\s+(?:better|more)\s+than\b"
+            r"|,\s*not\s+just\s+(?:looks|a\s+\w+|another\s+\w+)\b"
+            r"|\ba\s+little\s+more\s+you\b"
+            r"|\bfeel\s+(?:at\s+home|like\s+home)\b"
+            r"|\b([A-Z][a-z]+)\s+[a-z]+\.\s+\1\s+[a-z]+\.",
     skip_tests=True, project_threshold=2,
 )
 
@@ -519,3 +540,27 @@ def check_fake_chart(ctx: FileContext) -> Iterable[Hit]:
         line = ctx.line_of(match.start())
         if not ctx.is_comment(line):
             yield Hit(line, ctx.line_text(line).strip(), "hard-coded series")
+
+
+line_rule(
+    "ui/fake-feature", "Button that only pretends to work", SEVERITY_MEDIUM, CATEGORY_UI_SLOP, (KIND_MARKUP, KIND_SCRIPT),
+    why="Sign-in, checkout or booking buttons that just alert('...preview: connect your provider here') or say "
+        "\"connect a booking backend to accept real bookings\" ship a feature that doesn't exist. Users click it "
+        "and nothing real happens.",
+    fix="Implement the feature, or remove/disable the control and say plainly that it's not available yet.",
+    pattern=r"\balert\(\s*['\"`][^'\"`]*\b(?:preview|coming soon|not (?:yet )?(?:implemented|available)|todo|"
+            r"placeholder|demo)\b"
+            r"|['\"`>][^'\"`<]*\bconnect\s+(?:your|a|an)\s+[\w -]{3,40}?\s+(?:here|to\s+(?:accept|enable|make|send|start))\b"
+            r"|\bdemo\s+(?:request|mode|only|booking|checkout|payment)\b",
+    skip_tests=True,
+)
+
+
+line_rule(
+    "ui/fake-ratings", "Hard-coded ratings and review counts", SEVERITY_MEDIUM, CATEGORY_UI_SLOP, (KIND_MARKUP, KIND_SCRIPT),
+    why="Listings shipped with literal ratings and review counts (rating: '4.96', reviews: 84) show reviews "
+        "nobody wrote. It looks like social proof and it's invented.",
+    fix="Load ratings and reviews from real data, or hide them until there are real reviews.",
+    pattern=r"\brating\s*:\s*['\"]?[3-5]\.\d{1,2}['\"]?\s*,\s*(?:reviews?|reviewCount|review_count)\s*:\s*\d+",
+    skip_tests=True, aggregate_per_file=True,
+)

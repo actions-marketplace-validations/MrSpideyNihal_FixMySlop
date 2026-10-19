@@ -5,7 +5,7 @@ respects .gitignore, skips binary, minified, generated and oversized files.
 import fnmatch
 from pathlib import Path
 from typing import Iterator, Callable, Optional, Iterable
-from fixmyslop.macros import SUPPORTED_EXTENSIONS, DEFAULT_MAX_FILE_SIZE_KB
+from fixmyslop.macros import SUPPORTED_EXTENSIONS, DEFAULT_MAX_FILE_SIZE_KB, is_scannable
 from fixmyslop.utils.file_utils import read_file_safe, parse_gitignore
 from fixmyslop.utils.git_utils import list_files
 from fixmyslop.utils.logger import get_logger
@@ -50,6 +50,7 @@ class Scanner:
         else:
             self._gitignore_patterns = parse_gitignore(self.repo_path / ".gitignore")
         self._cache: Optional[list[Path]] = None
+        self.skipped_minified: list[Path] = []
 
     def scan(
         self,
@@ -65,7 +66,11 @@ class Scanner:
 
         for i, path in enumerate(all_files):
             content = read_file_safe(path, self.max_file_size_kb)
-            if content is None or _looks_minified(content):
+            if content is None:
+                continue
+            if not self._is_single_file and _looks_minified(path, content):
+                logger.info("Skipping minified/bundled file: %s", path)
+                self.skipped_minified.append(path)
                 continue
             if progress_callback:
                 progress_callback(i + 1, total, path.name)
@@ -81,7 +86,7 @@ class Scanner:
         """Filter by skip dirs, extension, generated-file patterns and size."""
         if any(part in self.SKIP_DIRS for part in rel_parts[:-1]):
             return False
-        if item.suffix.lower() not in self.extensions:
+        if not is_scannable(item, self.extensions):
             return False
         if any(fnmatch.fnmatch(item.name, pattern) for pattern in self.SKIP_FILE_PATTERNS):
             return False
@@ -108,7 +113,7 @@ class Scanner:
 
         if self._is_single_file:
             path = self.repo_path
-            if path.suffix.lower() in self.extensions:
+            if is_scannable(path, self.extensions):
                 try:
                     if path.stat().st_size <= self.max_file_size_kb * 1024:
                         yield path
@@ -158,9 +163,15 @@ class Scanner:
         return len(self.files())
 
 
-def _looks_minified(content: str) -> bool:
-    """Heuristic: bundled/minified files have very long average lines."""
+def _looks_minified(path: Path, content: str) -> bool:
+    """Bundled/minified JS or CSS: very long lines on average and at least one huge line.
+
+    Never applies to HTML or components: AI-generated single-file pages often put all
+    their CSS on a few long lines, and those are exactly the files worth scanning.
+    """
+    if path.suffix.lower() not in (".js", ".mjs", ".cjs", ".css"):
+        return False
     if len(content) < 5000:
         return False
-    lines = content.count("\n") + 1
-    return len(content) / lines > 300
+    lines = content.splitlines() or [content]
+    return len(content) / len(lines) > 500 and max(len(line) for line in lines) > 2000

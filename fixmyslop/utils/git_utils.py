@@ -37,6 +37,11 @@ def git_root(path: Path) -> Optional[Path]:
     return Path(out.strip()).resolve() if out else None
 
 
+def is_ignored(path: Path) -> bool:
+    """True when git ignores `path` (tracked files never are). False outside a repository."""
+    return _git(path.parent, "check-ignore", "-q", path.name) is not None
+
+
 def list_files(directory: Path) -> Optional[list[Path]]:
     """Tracked + untracked-but-not-ignored files under `directory`."""
     if git_root(directory) is None:

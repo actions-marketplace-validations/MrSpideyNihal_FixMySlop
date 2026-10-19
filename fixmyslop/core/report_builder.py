@@ -48,28 +48,6 @@ def relative_path(report: ScanReport, file_path: str) -> str:
         return Path(file_path).as_posix()
 
 
-def _strip_emojis_for_pdf(text: str) -> str:
-    """Replace emojis with PDF-safe plain text."""
-    replacements = {
-        "⚡": "[TURBO]",
-        "🔍": "[DEEP]",
-        "⚠": "[!]",
-        "✓": "[OK]",
-        "⏳": "[...]",
-        "🔒": "[SEC]",
-        "📊": "[STATS]",
-    }
-    for emoji, replacement in replacements.items():
-        text = text.replace(emoji, replacement)
-    # Helvetica in fpdf2 expects latin-1 text unless custom Unicode fonts are used.
-    return text.encode("latin-1", errors="replace").decode("latin-1")
-
-
-def _pdf_safe_text(value) -> str:
-    """Coerce values to string and remove unsupported emoji glyphs for PDF fonts."""
-    return _strip_emojis_for_pdf(str(value))
-
-
 class ReportBuilder:
     """
     Assembles a ScanReport from issues and exports to
@@ -153,71 +131,9 @@ class ReportBuilder:
             return self._to_markdown(report)
 
     def export_pdf(self, report: ScanReport, output_path: str):
-        """Export report as a PDF file. Requires fpdf2."""
-        try:
-            from fpdf import FPDF
-        except ImportError:
-            logger.warning("fpdf2 not installed — saving as HTML instead")
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(self._to_html(report))
-            logger.info("Install fpdf2 for PDF: pip install fpdf2")
-            return
-
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
-
-        # Title
-        pdf.set_font("Helvetica", "B", 20)
-        pdf.cell(
-            0,
-            12,
-            _pdf_safe_text(f"{APP_NAME} Audit Report"),
-            new_x="LMARGIN",
-            new_y="NEXT",
-        )
-        pdf.ln(4)
-
-        # Metadata
-        pdf.set_font("Helvetica", "", 10)
-        meta = [
-            f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-            f"Repo: {report.repo_path}",
-            f"Slop Score: {report.slop_score}/100" + (f" (grade {report.grade})" if report.grade else ""),
-            f"Mode: {_scan_mode_summary(report.scan_mode)}",
-            f"Model: {report.model_used}",
-            f"Files: {report.scanned_files}/{report.total_files}",
-            f"Issues: {len(report.issues)}",
-            f"Scan Time: {report.scan_time_s:.1f}s",
-        ]
-        for line in meta:
-            pdf.cell(0, 6, _pdf_safe_text(line), new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(6)
-
-        # Issues table header
-        pdf.set_font("Helvetica", "B", 9)
-        col_w = [22, 55, 22, 30, 60]
-        headers = ["Severity", "File", "Lines", "Category", "Title"]
-        for w, h in zip(col_w, headers, strict=True):
-            pdf.cell(w, 8, _pdf_safe_text(h), border=1)
-        pdf.ln()
-
-        # Issues table rows
-        pdf.set_font("Helvetica", "", 8)
-        for issue in sorted(report.issues, key=severity_sort_key):
-            pdf.cell(col_w[0], 7, _pdf_safe_text(issue.severity), border=1)
-            pdf.cell(col_w[1], 7, _pdf_safe_text(relative_path(report, issue.file_path)[-30:]), border=1)
-            pdf.cell(
-                col_w[2],
-                7,
-                _pdf_safe_text(f"{issue.line_start}-{issue.line_end}"),
-                border=1,
-            )
-            pdf.cell(col_w[3], 7, _pdf_safe_text(issue.category[:16]), border=1)
-            pdf.cell(col_w[4], 7, _pdf_safe_text(issue.title[:32]), border=1)
-            pdf.ln()
-
-        pdf.output(output_path)
+        """Export report as a PDF file (built-in writer, no extra dependencies)."""
+        from fixmyslop.core.pdf_report import render_pdf
+        Path(output_path).write_bytes(render_pdf(report, lambda p: relative_path(report, p)))
         logger.info("PDF report saved: %s", output_path)
 
     def _to_csv(self, report: ScanReport) -> str:
@@ -246,39 +162,56 @@ class ReportBuilder:
         return output.getvalue()
 
     def _to_markdown(self, report: ScanReport) -> str:
-        """Export report as Markdown."""
-        counts = Counter(i.severity for i in report.issues)
-        breakdown = " · ".join(f"{sev}: {counts[sev]}" for sev in SEVERITY_RANK if counts.get(sev))
-        grade_text = f" (grade {report.grade})" if report.grade else ""
+        """Export report as Markdown: summary, findings grouped by file, then each rule's fix once."""
+        issues = report.issues
+        counts = Counter(i.severity for i in issues)
+        breakdown = " · ".join(f"{sev.title()} {counts[sev]}" for sev in SEVERITY_RANK if counts.get(sev))
+        project = Path(report.repo_path).name or report.repo_path      # never publish the local user path
         lines = [
-            f"# {APP_NAME} Audit Report",
-            f"**Version:** {APP_VERSION}  ",
-            f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}  ",
-            f"**Repo:** `{report.repo_path}`  ",
-            f"**Slop Score:** {report.slop_score}/100{grade_text}  ",
-            f"**Mode:** {_scan_mode_summary(report.scan_mode)}  ",
-            f"**Model:** {report.model_used}  ",
-            f"**Files Scanned:** {report.scanned_files}/{report.total_files}  ",
-            f"**Issues Found:** {len(report.issues)}" + (f" ({breakdown})" if breakdown else "") + "  ",
+            f"# {APP_NAME} report: {project}",
             "",
-            "## Issues",
+            f"**Slop score {report.slop_score:g}/100 · grade {report.grade or '-'}** · "
+            f"{len(issues)} issues" + (f" ({breakdown})" if breakdown else ""),
+            "",
+            f"{datetime.now():%Y-%m-%d %H:%M} · {report.scanned_files} files · {report.lines_scanned:,} lines · "
+            f"{_scan_mode_summary(report.scan_mode)} · {APP_NAME} {APP_VERSION}",
             "",
         ]
-        for issue in sorted(report.issues, key=severity_sort_key):
-            lines += [
-                f"### [{issue.severity}] {issue.title}",
-                f"**File:** `{relative_path(report, issue.file_path)}` "
-                f"(lines {issue.line_start}-{issue.line_end})  ",
-                f"**Category:** {issue.category}  ",
-                f"**Rule:** `{issue.rule_id}` ({issue.source_tool})  ",
-                "",
-                issue.description,
-                "",
-            ]
-            if issue.evidence:
-                lines += ["```", issue.evidence, "```", ""]
+        if not issues:
+            return "\n".join(lines + ["No slop found. Nothing to fix.", ""])
+
+        titles: dict[str, str] = {}
+        for issue in issues:
+            titles.setdefault(issue.rule_id or issue.source_tool, issue.title)
+        lines += ["## Summary", "", "| Category | Issues |", "|---|---:|"]
+        lines += [f"| {cat} | {n} |" for cat, n in Counter(i.category for i in issues).most_common()]
+        lines += ["", "| Rule | Issues | What |", "|---|---:|---|"]
+        lines += [f"| `{rule}` | {n} | {titles[rule]} |"
+                  for rule, n in Counter(i.rule_id or i.source_tool for i in issues).most_common(10)]
+        lines += ["", "## Issues", ""]
+
+        by_file: dict[str, list[Issue]] = {}
+        for issue in sorted(issues, key=severity_sort_key):
+            by_file.setdefault(relative_path(report, issue.file_path), []).append(issue)
+        for path, file_issues in by_file.items():
+            lines += [f"### `{path}` ({len(file_issues)})", ""]
+            for issue in sorted(file_issues, key=lambda i: (SEVERITY_RANK.get(i.severity, 9), i.line_start)):
+                lines.append(f"- **L{issue.line_start}** {issue.severity} · {issue.title} "
+                             f"`{issue.rule_id or issue.source_tool}`")
+                if issue.evidence:
+                    snippet = " ".join(issue.evidence.split()).replace("`", "'")
+                    snippet = snippet if len(snippet) <= 160 else snippet[:157] + "..."
+                    lines.append(f"  `{snippet}`")
+            lines.append("")
+
+        fixes: dict[str, str] = {}
+        for issue in sorted(issues, key=lambda i: i.rule_id or ""):
             if issue.suggested_fix:
-                lines += [f"**Fix:** {issue.suggested_fix}", ""]
+                fixes.setdefault(issue.rule_id or issue.source_tool, issue.suggested_fix)
+        if fixes:
+            lines += ["## How to fix each rule", ""]
+            lines += [f"- `{rule}`: {fix}" for rule, fix in fixes.items()]
+            lines += ["", "Hand the fix list to your agent with `fixmyslop scan -f prompt`, then re-scan to verify.", ""]
         return "\n".join(lines)
 
     def _to_json(self, report: ScanReport) -> str:

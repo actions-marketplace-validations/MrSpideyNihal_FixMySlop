@@ -1,0 +1,18 @@
+{
+  "note": "Pinned corpus. 'ai' = apps built with AI app builders (found via GitHub search for Lovable projects); 'hand' = well-known hand-built Next.js/shadcn repos used as a control group.",
+  "repos": [
+    {"group": "ai", "name": "aura-wardrobe-intelligence", "url": "https://github.com/giulianigi-cmyk/aura-wardrobe-intelligence.git", "commit": "ba445fd34f1565f95e1fa1f359de95d9f2618103"},
+    {"group": "ai", "name": "clippr-v2-lovable", "url": "https://github.com/clippr2026/clippr-v2-lovable.git", "commit": "b2fe466cd989e7b77324927600fb9c511fad621e"},
+    {"group": "ai", "name": "dl-life-canvas", "url": "https://github.com/denislevakov/dl-life-canvas.git", "commit": "795148b4b5762d0df16208651a9109da30f4fcf0"},
+    {"group": "ai", "name": "municipal-connect", "url": "https://github.com/Akhil2910/https-municipal-connect-40-lovable-app-690cb798.git", "commit": "0d2308e00e743062a722d15d0e19f7e228ea7065"},
+    {"group": "ai", "name": "leadmachine-leadcatch-lovable", "url": "https://github.com/Naha1981/leadmachine-leadcatch-lovable.git", "commit": "e96abc5f76ee98055b4b9ab3bafd9e2c4c6e9da5"},
+    {"group": "ai", "name": "lovable-portfoilo", "url": "https://github.com/WeaamR/lovable-portfoilo.git", "commit": "59a9fea90846b4b4b6d46e0791e5e7fd067fabf7"},
+    {"group": "ai", "name": "lumina-lovable-concept", "url": "https://github.com/buildcosmicai/lumina-lovable-concept.git", "commit": "ecc8ad478ea94921cf781c5088e6334af323f94d"},
+    {"group": "ai", "name": "money-kalkulacka", "url": "https://github.com/trenknerpeter/money-kalkulacka.git", "commit": "f5676df472afb0a2e4d1f7afa545b83f235a5c68"},
+    {"group": "ai", "name": "usama-showcase-sparkle", "url": "https://github.com/CH-USAMA/usama-showcase-sparkle.git", "commit": "ce391f6c34683246f86de21201543e502195afcc"},
+    {"group": "hand", "name": "commerce", "url": "https://github.com/vercel/commerce.git", "commit": "3761e52e60df9c6a316e067dbfd7032e494d3634"},
+    {"group": "hand", "name": "next-template", "url": "https://github.com/shadcn-ui/next-template.git", "commit": "d117bd0fd897cfd3b0d14e8647d8fcd6341a511b"},
+    {"group": "hand", "name": "saas-starter", "url": "https://github.com/nextjs/saas-starter.git", "commit": "6e33e58b1e553a41fe22e6b941a7229a002de361"},
+    {"group": "hand", "name": "taxonomy", "url": "https://github.com/shadcn-ui/taxonomy.git", "commit": "298a8857c7128a0d121e7f699dfd729f23b3966d"}
+  ]
+}

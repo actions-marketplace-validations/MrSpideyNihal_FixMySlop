@@ -41,3 +41,5 @@ htmlcov/
 
 # Logs
 *.log
+benchmarks/.cache/
+benchmarks/sample.json

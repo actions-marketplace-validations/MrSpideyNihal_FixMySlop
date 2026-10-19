@@ -1,0 +1,224 @@
+[
+ {
+  "group": "ai",
+  "name": "aura-wardrobe-intelligence",
+  "score": 13.4,
+  "grade": "B",
+  "issues": 263,
+  "lines": 67890,
+  "rules": {
+   "a11y/focus-removed": 85,
+   "ui/eyebrow-labels": 43,
+   "slop/empty-catch": 9,
+   "slop/console-log": 2,
+   "a11y/clickable-div": 3,
+   "a11y/icon-button": 47,
+   "ui/marketing-slop": 1,
+   "ui/gimmick-animation": 1,
+   "slop/ts-any": 58,
+   "ui/emoji-icons": 11,
+   "ui/arbitrary-color": 2,
+   "ui/off-scale-values": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "clippr-v2-lovable",
+  "score": 25.7,
+  "grade": "C",
+  "issues": 526,
+  "lines": 65145,
+  "rules": {
+   "a11y/focus-removed": 6,
+   "ui/z-index-war": 15,
+   "a11y/icon-button": 38,
+   "ui/eyebrow-labels": 16,
+   "slop/empty-catch": 4,
+   "ui/ai-gradient": 176,
+   "ui/blur-blobs": 51,
+   "ui/gradient-text": 6,
+   "ui/two-tone-headline": 3,
+   "a11y/clickable-div": 10,
+   "slop/console-log": 2,
+   "ui/gimmick-animation": 3,
+   "sec/cors-wildcard": 2,
+   "ui/arbitrary-color": 30,
+   "ui/heavy-shadows": 19,
+   "ui/neon-glow": 36,
+   "slop/ts-any": 28,
+   "ui/glassmorphism": 13,
+   "ui/emoji-icons": 58,
+   "ui/default-font": 1,
+   "ui/hover-scale": 2,
+   "ui/important-abuse": 2,
+   "slop/duplicate-function": 2,
+   "ui/rainbow-palette": 1,
+   "ui/off-scale-values": 1,
+   "ui/palette-sprawl": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "dl-life-canvas",
+  "score": 20.8,
+  "grade": "B",
+  "issues": 59,
+  "lines": 11446,
+  "rules": {
+   "a11y/focus-removed": 40,
+   "ui/eyebrow-labels": 8,
+   "slop/empty-catch": 7,
+   "sec/raw-html": 1,
+   "a11y/icon-button": 1,
+   "ui/default-font": 1,
+   "slop/duplicate-function": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "municipal-connect",
+  "score": 8.7,
+  "grade": "A",
+  "issues": 19,
+  "lines": 9352,
+  "rules": {
+   "sec/sql-injection": 2,
+   "a11y/icon-button": 7,
+   "slop/empty-catch": 2,
+   "ui/eyebrow-labels": 1,
+   "slop/ts-any": 6,
+   "ui/default-font": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "leadmachine-leadcatch-lovable",
+  "score": 5.9,
+  "grade": "A",
+  "issues": 45,
+  "lines": 20013,
+  "rules": {
+   "deps/phantom-import": 1,
+   "slop/empty-catch": 2,
+   "sec/hardcoded-credential": 1,
+   "sec/raw-html": 1,
+   "a11y/icon-button": 2,
+   "ui/eyebrow-labels": 2,
+   "slop/ts-any": 35,
+   "ui/neon-glow": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "lovable-portfoilo",
+  "score": 0.0,
+  "grade": "A",
+  "issues": 0,
+  "lines": 6182,
+  "rules": {}
+ },
+ {
+  "group": "ai",
+  "name": "lumina-lovable-concept",
+  "score": 4.8,
+  "grade": "A",
+  "issues": 11,
+  "lines": 8593,
+  "rules": {
+   "a11y/clickable-div": 4,
+   "a11y/focus-removed": 3,
+   "ui/gimmick-animation": 4
+  }
+ },
+ {
+  "group": "ai",
+  "name": "money-kalkulacka",
+  "score": 1.5,
+  "grade": "A",
+  "issues": 4,
+  "lines": 10818,
+  "rules": {
+   "ui/fake-chart": 1,
+   "a11y/focus-removed": 2,
+   "ui/default-font": 1
+  }
+ },
+ {
+  "group": "ai",
+  "name": "usama-showcase-sparkle",
+  "score": 4.3,
+  "grade": "A",
+  "issues": 30,
+  "lines": 27914,
+  "rules": {
+   "sec/sql-injection": 1,
+   "ui/gimmick-animation": 4,
+   "slop/empty-catch": 2,
+   "ui/fake-social-proof": 2,
+   "ui/z-index-war": 1,
+   "slop/placeholder-impl": 1,
+   "ui/gradient-text": 2,
+   "sec/cors-wildcard": 2,
+   "ui/default-font": 1,
+   "ui/emoji-icons": 8,
+   "ui/neon-glow": 3,
+   "ui/important-abuse": 1,
+   "ui/rainbow-palette": 1,
+   "ui/off-scale-values": 1
+  }
+ },
+ {
+  "group": "hand",
+  "name": "commerce",
+  "score": 9.4,
+  "grade": "A",
+  "issues": 12,
+  "lines": 3559,
+  "rules": {
+   "sec/raw-html": 2,
+   "a11y/clickable-div": 2,
+   "slop/ts-any": 3,
+   "ui/hover-scale": 4,
+   "ui/off-scale-values": 1
+  }
+ },
+ {
+  "group": "hand",
+  "name": "next-template",
+  "score": 0.0,
+  "grade": "A",
+  "issues": 0,
+  "lines": 510,
+  "rules": {}
+ },
+ {
+  "group": "hand",
+  "name": "saas-starter",
+  "score": 3.0,
+  "grade": "A",
+  "issues": 4,
+  "lines": 3495,
+  "rules": {
+   "ui/marketing-slop": 1,
+   "ui/two-tone-headline": 1,
+   "slop/narrating-comment": 1,
+   "slop/emoji-log": 1
+  }
+ },
+ {
+  "group": "hand",
+  "name": "taxonomy",
+  "score": 5.8,
+  "grade": "A",
+  "issues": 13,
+  "lines": 7177,
+  "rules": {
+   "slop/narrating-comment": 5,
+   "a11y/focus-removed": 3,
+   "slop/placeholder-impl": 1,
+   "slop/blanket-suppression": 2,
+   "ui/default-font": 1,
+   "ui/off-scale-values": 1
+  }
+ }
+]

@@ -41,15 +41,6 @@ def test_bracket_paths_and_text_survive_rich_markup(tmp_path):
     assert "bg-[#1a1a2e]" in explained.stdout
 
 
-def test_gui_without_pyqt_names_the_extra(monkeypatch):
-    """The install hint must keep the [gui] extra (Rich would otherwise eat it as markup)."""
-    import sys
-    monkeypatch.setitem(sys.modules, "PyQt5", None)
-    monkeypatch.delitem(sys.modules, "fixmyslop.ui.app", raising=False)
-    result = runner.invoke(app, ["gui"])
-    assert result.exit_code == 1
-    assert "pip install fixmyslop[gui]" in result.stdout
-
 
 def test_generated_ci_workflow_pins_this_version(tmp_path):
     """`init --github` must reference a real released tag, not a moving branch."""

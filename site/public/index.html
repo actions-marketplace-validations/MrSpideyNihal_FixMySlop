@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixMySlop: find the AI slop in a GitHub repo</title>
+<meta name="description" content="Paste a public GitHub repo. FixMySlop reads the code without running it and returns a slop score, every finding with its fix, and a prompt for your coding agent.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/site.css">
+<script src="/site.js" defer></script>
+<script src="/_vercel/insights/script.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="container">
+    <a class="wordmark" href="/" aria-label="FixMySlop home">
+      <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h6"/><path d="m15 15 2 2 4-4"/></svg>
+      FixMySlop
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#checks">What it checks</a>
+      <a href="#use">CLI and agents</a>
+      <a href="#accuracy">Accuracy</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <div class="spacer"></div>
+    <a class="btn small" id="stars" href="https://github.com/MrSpideyNihal/FixMySlop" rel="noopener">
+      <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7 3.6 3.6 0 0 1 .1-2.7s.8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1a3.6 3.6 0 0 1 .1 2.7 3.9 3.9 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>
+      <span>Star</span><span class="count" id="starCount" hidden></span>
+    </a>
+    <button class="btn ghost small" id="themeBtn" type="button" aria-label="Toggle color theme">
+      <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="container">
+      <h1>Find the AI slop in a GitHub repo</h1>
+      <p class="lead">Paste a public repository. FixMySlop reads the code without running it and gives you a slop
+        score, every finding with its fix, and a prompt you can hand to your coding agent.</p>
+
+      <form class="scan-form" id="scanForm" novalidate>
+        <label class="skip" for="repo">GitHub repository</label>
+        <input class="input" id="repo" name="repo" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+               placeholder="github.com/owner/repo" aria-describedby="status" required>
+        <button class="btn primary large" id="scanBtn" type="submit">Scan repository</button>
+      </form>
+      <div class="examples">
+        <span class="faint">Try</span>
+        <button class="pill" type="button" data-example="MrSpideyNihal/FixMySlop">MrSpideyNihal/FixMySlop</button>
+        <button class="pill" type="button" data-example="shadcn-ui/taxonomy">shadcn-ui/taxonomy</button>
+        <button class="pill" type="button" data-example="vercel/commerce">vercel/commerce</button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="container">
+      <ol class="steps">
+        <li><h3>Paste a repo</h3><p class="muted">Public GitHub repositories. The code is downloaded, read and deleted. Nothing is installed or run.</p></li>
+        <li><h3>Get the report</h3><p class="muted">A slop score and grade, findings grouped by file, the exact line and the fix. Download it as PDF or Markdown.</p></li>
+        <li><h3>Fix it with your agent</h3><p class="muted">Copy the fix prompt into Claude Code, Cursor or Codex, then scan again to confirm the score went down.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="checks">
+    <div class="container">
+      <div class="section-head">
+        <h2>What it checks</h2>
+        <p>Deterministic rules for the mistakes AI coding tools make. Same input, same findings, every time.</p>
+      </div>
+      <div class="grid cols-3">
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>UI slop</h3>
+          <ul>
+            <li>The generated look: AI gradients and glow in any color, glass cards, blur blobs</li>
+            <li>Invented stats, ratings and testimonials</li>
+            <li>Colors and spacing that ignore the design system</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M5 9h14M12 9v12M8 21l4-6 4 6"/></svg>Accessibility</h3>
+          <ul>
+            <li>Clickable divs and icon buttons without a label</li>
+            <li>Focus outlines removed with nothing in their place</li>
+            <li>Images without alt text, links that go nowhere</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg>Code slop</h3>
+          <ul>
+            <li><code>// ... existing code ...</code> where real code was deleted</li>
+            <li>Placeholder implementations shipped as the real thing</li>
+            <li>Swallowed errors and empty <code>catch</code> blocks</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M9 3h6M10 3v6L4 19a1 1 0 0 0 .9 1.5h14.2A1 1 0 0 0 20 19l-6-10V3"/></svg>Backend and tests</h3>
+          <ul>
+            <li>Tests that assert nothing</li>
+            <li>The same function copy-pasted across files</li>
+            <li>Ignored Go errors, Java handlers that only print the stack trace</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Security and packages</h3>
+          <ul>
+            <li>Leaked API keys and committed <code>.env</code> secrets</li>
+            <li>Secrets behind <code>NEXT_PUBLIC_</code> and <code>VITE_</code></li>
+            <li>Imports of packages that don't exist</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 13h7M9 17h5"/></svg>Docs</h3>
+          <ul>
+            <li>README commands that package.json doesn't have</li>
+            <li>Links to files that aren't in the repo</li>
+            <li>Template placeholders and pasted chatbot replies</li>
+          </ul>
+        </div>
+      </div>
+      <p class="muted note">Full depth for React, Next.js, Vue, Svelte, Astro, HTML, CSS, Python and JS/TS.
+        General checks for Go, Java, Kotlin, C#, Swift, PHP, Rust, Ruby and more.
+        <a href="https://github.com/MrSpideyNihal/FixMySlop#supported-languages" rel="noopener">Supported languages</a></p>
+    </div>
+  </section>
+
+  <section class="block" id="use">
+    <div class="container">
+      <div class="section-head">
+        <h2>Run it where you work</h2>
+        <p>The web scan is a preview. The CLI scans private code on your machine, and your agent can check its own work as it writes.</p>
+      </div>
+      <div class="tabs" data-tabs>
+        <div class="tablist" role="tablist" aria-label="Ways to run FixMySlop">
+          <button class="tab" role="tab" type="button" id="tab-cli" aria-controls="panel-cli" aria-selected="true">CLI</button>
+          <button class="tab" role="tab" type="button" id="tab-claude" aria-controls="panel-claude" aria-selected="false" tabindex="-1">Claude Code</button>
+          <button class="tab" role="tab" type="button" id="tab-mcp" aria-controls="panel-mcp" aria-selected="false" tabindex="-1">Cursor and MCP</button>
+          <button class="tab" role="tab" type="button" id="tab-ci" aria-controls="panel-ci" aria-selected="false" tabindex="-1">GitHub Actions</button>
+          <button class="tab" role="tab" type="button" id="tab-hook" aria-controls="panel-hook" aria-selected="false" tabindex="-1">pre-commit</button>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-cli" aria-labelledby="tab-cli">
+          <p>Python 3.10+. JavaScript projects can use <code>npx fixmyslop</code> with no install step.</p>
+          <div class="code"><pre>pipx install fixmyslop</pre></div>
+          <div class="code"><pre>fixmyslop scan                 # the whole repo
+fixmyslop scan --changed       # only what your branch changed
+fixmyslop ui                   # the app: browse issues, copy fix prompts
+fixmyslop scan -s report.pdf   # or .md, .html, .csv, .json, .sarif
+fixmyslop baseline             # existing codebase: report only new slop</pre></div>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-claude" aria-labelledby="tab-claude" hidden>
+          <p>Installs a skill, an MCP server and a hook. Every file Claude writes is checked, and only the lines it just wrote are reported back to it before it moves on.</p>
+          <div class="code"><pre>fixmyslop init --claude</pre></div>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-mcp" aria-labelledby="tab-mcp" hidden>
+          <p>Cursor rules and an MCP server with <code>check_slop</code>, <code>fix_safe</code> and <code>explain_rule</code> tools. <code>--agents</code> writes AGENTS.md for Codex, Gemini and Copilot agents.</p>
+          <div class="code"><pre>fixmyslop init --cursor
+fixmyslop init --agents</pre></div>
+          <p>Any client configured with JSON (Cursor, Windsurf, Claude Desktop):</p>
+          <div class="code"><pre>{ "mcpServers": { "fixmyslop": { "command": "npx", "args": ["-y", "fixmyslop", "mcp"] } } }</pre></div>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-ci" aria-labelledby="tab-ci" hidden>
+          <p>Findings appear as inline annotations on the pull request. Or run <code>fixmyslop init --github</code>.</p>
+          <div class="code"><pre># .github/workflows/fixmyslop.yml
+on: [pull_request]
+permissions: { contents: read, security-events: write }
+jobs:
+  slop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: MrSpideyNihal/FixMySlop@v0.6.7
+        with: { fail-on: high, changed-only: true }</pre></div>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-hook" aria-labelledby="tab-hook" hidden>
+          <p>Checks staged files before each commit.</p>
+          <div class="code"><pre>repos:
+  - repo: https://github.com/MrSpideyNihal/FixMySlop
+    rev: v0.6.7
+    hooks: [{ id: fixmyslop }]</pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="badge">
+    <div class="container">
+      <div class="section-head">
+        <h2>Add the badge</h2>
+        <p>Show your grade in your README. It links to the full report and refreshes every few hours.</p>
+      </div>
+      <div class="card">
+        <div class="badge-row">
+          <img id="badgePreview" src="/badge/MrSpideyNihal/FixMySlop" alt="FixMySlop grade for MrSpideyNihal/FixMySlop" width="140" height="20">
+          <span class="faint mono" id="badgeRepo">MrSpideyNihal/FixMySlop</span>
+        </div>
+        <div class="code"><pre id="badgeCode"></pre></div>
+        <p class="faint note-sm">Scan a repository above to get the badge for it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="accuracy">
+    <div class="container">
+      <div class="section-head">
+        <h2>How accurate it is</h2>
+        <p>Measured on a pinned set of real repositories, with every number reproducible from the repo.</p>
+      </div>
+      <div class="grid cols-4">
+        <div class="card stat"><b>95%</b><span>of 80 randomly sampled findings were correct on manual review</span></div>
+        <div class="card stat"><b>All A</b><span>grades for the four hand-built control repos, including vercel/commerce</span></div>
+        <div class="card stat"><b>About 2x</b><span>more findings per 1,000 lines in AI-built apps than in hand-built ones</span></div>
+        <div class="card stat"><b>0 of 20</b><span>well-known hand-written READMEs (React, Django, Vite) flagged by the docs rules</span></div>
+      </div>
+      <p class="muted note"><a href="https://github.com/MrSpideyNihal/FixMySlop/blob/main/benchmarks/BENCHMARK.md" rel="noopener">Method, raw labels and per-repo results</a></p>
+    </div>
+  </section>
+
+  <section class="block" id="limits">
+    <div class="container grid cols-2">
+      <div>
+        <h2>What it can't catch</h2>
+        <p class="muted note-sm">FixMySlop finds the tells AI-written code leaves behind. It doesn't know what your
+          code is meant to do, so it won't catch logic that is wrong but looks normal, a test that asserts the wrong
+          thing, or a README that describes features the code doesn't have. A clean scan means none of the known
+          tells, not that the code is correct. Keep reviewing code and running tests.</p>
+      </div>
+      <div>
+        <h2>Privacy</h2>
+        <ul class="muted plain-list">
+          <li>Public GitHub repositories only. Nothing is installed or executed.</li>
+          <li>The download is deleted as soon as the scan finishes.</li>
+          <li>Reports are unlisted: anyone with the link can open them, search engines don't index them.</li>
+          <li>Page views are counted anonymously with Vercel Web Analytics: no cookies, no personal data.</li>
+          <li>For private code, run the CLI. It works offline and sends nothing anywhere.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>FixMySlop is open source under the MIT license.</span>
+    <nav aria-label="Project links">
+      <a href="https://github.com/MrSpideyNihal/FixMySlop" rel="noopener">GitHub</a>
+      <a href="https://pypi.org/project/fixmyslop/" rel="noopener">PyPI</a>
+      <a href="https://www.npmjs.com/package/fixmyslop" rel="noopener">npm</a>
+      <a href="https://github.com/MrSpideyNihal/FixMySlop/blob/main/CHANGELOG.md" rel="noopener">Changelog</a>
+      <a href="https://github.com/MrSpideyNihal/FixMySlop/issues" rel="noopener">Report a problem</a>
+    </nav>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

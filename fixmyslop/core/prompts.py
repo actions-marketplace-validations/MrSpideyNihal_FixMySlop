@@ -53,7 +53,7 @@ AUDIT_USER_TEMPLATE = (
     '    "line_start": <int>,\n'
     '    "line_end": <int>,\n'
     '    "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",\n'
-    '    "category": "Security|Technical Debt|Performance|Maintainability|Missing Tests|AI Smell",\n'
+    '    "category": "Security|Technical Debt|Performance|Maintainability|Missing Tests|Code Slop",\n'
     '    "rule_id": "<short_snake_case_id>",\n'
     '    "title": "<short title under 60 chars>",\n'
     '    "description": "<clear explanation of the problem>",\n'

@@ -7,7 +7,7 @@ from pathlib import Path
 
 # ─── App Identity ───────────────────────────────────────────────────────────
 APP_NAME = "FixMySlop"
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.6.7"
 APP_DESCRIPTION = "The slop linter for the AI-agent era. Catch it, then let your agent fix it."
 APP_AUTHOR = "Nihal Rodge"
 APP_LICENSE = "MIT"
@@ -77,19 +77,42 @@ CATEGORY_DEBT = "Technical Debt"
 CATEGORY_PERFORMANCE = "Performance"
 CATEGORY_MAINTAINABILITY = "Maintainability"
 CATEGORY_TESTING = "Missing Tests"
-CATEGORY_AI_SMELL = "AI Smell"
+CATEGORY_AI_SMELL = "Code Slop"
 CATEGORY_UI_SLOP = "UI Slop"
 CATEGORY_A11Y = "Accessibility"
 CATEGORY_DEPS = "Dependencies"
+CATEGORY_DOCS = "Docs Slop"
 
 # ─── Supported File Extensions ───────────────────────────────────────────────
 SUPPORTED_EXTENSIONS = {
     ".py", ".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs", ".mts", ".cts",
     ".vue", ".svelte", ".astro", ".html", ".htm",
     ".css", ".scss", ".sass", ".less",
-    ".go", ".rs", ".java", ".cpp", ".c",
-    ".cs", ".rb", ".php", ".swift", ".kt",
+    ".md", ".mdx", ".markdown",
+    ".go", ".rs", ".java", ".cpp", ".c", ".h", ".hpp",
+    ".cs", ".rb", ".php", ".swift", ".kt", ".kts", ".scala", ".dart", ".groovy",
 }
+
+ENV_TEMPLATE_SUFFIXES = (".example", ".sample", ".template", ".dist", ".defaults")
+
+
+def is_env_file(name: str) -> bool:
+    """`.env`, `.env.local`, `.env.production`, `prod.env` (not `env.ts` or `.env.d.ts`)."""
+    lower = name.lower()
+    if Path(lower).suffix in SUPPORTED_EXTENSIONS:
+        return False
+    return lower == ".env" or lower.startswith(".env.") or lower.endswith(".env")
+
+
+def is_env_template(name: str) -> bool:
+    """`.env.example` and friends: meant to be committed, with placeholder values."""
+    return name.lower().endswith(ENV_TEMPLATE_SUFFIXES)
+
+
+def is_scannable(path: Path, extensions=None) -> bool:
+    """A file FixMySlop reads: a supported source extension or an env file."""
+    return path.suffix.lower() in (extensions or SUPPORTED_EXTENSIONS) or is_env_file(path.name)
+
 
 # Severity threshold names accepted by --fail-on / --min-severity
 SEVERITY_RANK = {

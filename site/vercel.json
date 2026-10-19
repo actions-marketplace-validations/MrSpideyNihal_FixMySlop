@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "functions": {
+    "api/*.py": { "maxDuration": 60, "excludeFiles": "{dev.py,README.md}" }
+  },
+  "rewrites": [
+    { "source": "/r/:owner/:repo", "destination": "/api/report?repo=:owner/:repo" },
+    { "source": "/badge/:owner/:repo", "destination": "/api/badge?repo=:owner/:repo" }
+  ],
+  "headers": [
+    {
+      "source": "/((?!r/|badge/|api/).*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ]
+}

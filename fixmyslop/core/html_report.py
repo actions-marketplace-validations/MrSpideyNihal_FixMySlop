@@ -55,9 +55,12 @@ def render_html(report: ScanReport, relpath: Callable[[str], str]) -> str:
         "counts": Counter(i.severity for i in report.issues),
         "categories": sorted({i.category for i in report.issues}),
     }
+    project = Path(report.repo_path).name or report.repo_path   # never leak the local user path
+    data["meta"] = {"project": project, "score": f"{report.slop_score:g}", "grade": report.grade or "-",
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M"), "files": report.scanned_files,
+                    "lines": f"{report.lines_scanned:,}"}
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     esc = html.escape
-    project = Path(report.repo_path).name or report.repo_path   # never leak the local user path
     meta = (f"{esc(project)} · {report.scanned_files} files · {report.lines_scanned:,} lines · "
             f"{report.scan_time_s:.2f}s · {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     return (_TEMPLATE
@@ -70,7 +73,7 @@ def render_html(report: ScanReport, relpath: Callable[[str], str]) -> str:
             .replace("__DATA__", payload))
 
 
-_TEMPLATE = """<!DOCTYPE html>
+_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -150,6 +153,16 @@ footer{margin-top:32px;color:var(--faint);font-size:12px}
   .desc,pre,.fix{margin-left:0}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{
+  :root{--bg:#fff;--surface:#fff;--fg:#111;--muted:#555;--faint:#777;--line:#ddd;--code:#f4f4f2}
+  body{font-size:11px}
+  main{max-width:none;padding:0}
+  .toolbar,nav,.btn,.toast{display:none!important}
+  .layout{display:block}
+  .file{break-inside:auto;border-color:#ccc}
+  .issue{break-inside:avoid}
+  pre{white-space:pre-wrap}
+}
 </style>
 </head>
 <body>
@@ -168,6 +181,13 @@ footer{margin-top:32px;color:var(--faint);font-size:12px}
     <span id="sevChips"></span>
     <select id="cat" aria-label="Category"><option value="">All categories</option></select>
     <input type="search" id="q" placeholder="Filter by file, rule or text" aria-label="Search findings">
+    <select id="export" aria-label="Export the findings shown">
+      <option value="">Export…</option>
+      <option value="pdf">PDF (save from print)</option>
+      <option value="md">Markdown</option>
+      <option value="csv">CSV</option>
+      <option value="json">JSON</option>
+    </select>
     <button class="btn" id="copyAll" type="button">Copy fix prompt (all)</button>
   </div>
 
@@ -249,6 +269,50 @@ footer{margin-top:32px;color:var(--faint);font-size:12px}
   }
   $("copyAll").onclick = () => copy(data.brief);
   if (!data.files.length) $("copyAll").hidden = true;
+
+  // Export what's on screen (filters apply). PDF goes through the browser's print dialog.
+  function shownFiles() {
+    return data.files.map(f => ({path: f.path, issues: visible(f)})).filter(f => f.issues.length);
+  }
+  function download(name, type, text) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], {type}));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  const m = data.meta, base = `fixmyslop-${m.project}`.replace(/[^\w.-]+/g, "-");
+  const exporters = {
+    md() {
+      const files = shownFiles(), n = files.reduce((a, f) => a + f.issues.length, 0);
+      let out = `# FixMySlop report: ${m.project}\n\n**Slop score ${m.score}/100 · grade ${m.grade}** · ${n} issues\n\n` +
+        `${m.date} · ${m.files} files · ${m.lines} lines\n\n`;
+      const fixes = {};
+      files.forEach(f => {
+        out += `## \`${f.path}\` (${f.issues.length})\n\n`;
+        f.issues.forEach(i => {
+          out += `- **L${i.line}** ${i.sev} · ${i.title} \`${i.rule}\`\n`;
+          if (i.evidence) out += `  \`${i.evidence.replace(/\s+/g, " ").replace(/`/g, "'").slice(0, 160)}\`\n`;
+          if (i.fix && !fixes[i.rule]) fixes[i.rule] = i.fix;
+        });
+        out += "\n";
+      });
+      const rules = Object.keys(fixes).sort();
+      if (rules.length) out += "## How to fix each rule\n\n" + rules.map(r => `- \`${r}\`: ${fixes[r]}`).join("\n") + "\n";
+      download(`${base}.md`, "text/markdown", out);
+    },
+    csv() {
+      const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const rows = [["Severity", "File", "Line", "Category", "Rule", "Title", "Evidence", "Fix"].map(q).join(",")];
+      shownFiles().forEach(f => f.issues.forEach(i =>
+        rows.push([i.sev, f.path, i.line, i.cat, i.rule, i.title, i.evidence, i.fix].map(q).join(","))));
+      download(`${base}.csv`, "text/csv", "\ufeff" + rows.join("\r\n"));
+    },
+    json() {
+      download(`${base}.json`, "application/json", JSON.stringify({report: m, findings: shownFiles()}, null, 2));
+    },
+    pdf() { window.print(); },
+  };
+  $("export").onchange = (e) => { const fmt = e.target.value; e.target.value = ""; if (fmt) exporters[fmt](); };
   render();
 })();
 </script>

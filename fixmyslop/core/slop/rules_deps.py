@@ -333,19 +333,23 @@ class DependencyIndex:
         if key in self._registry_cache:
             return self._registry_cache[key]
         result: Optional[bool] = None
-        try:
-            import requests
-            if ecosystem == "pypi":
-                url = f"https://pypi.org/pypi/{name}/json"
-            else:
-                url = "https://registry.npmjs.org/" + name.replace("/", "%2F")
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 404:
-                result = False
-            elif resp.status_code == 200:
-                result = True
-        except Exception as e:
-            logger.debug("Registry lookup failed for %s: %s", name, e)
+        import requests
+        if ecosystem == "pypi":
+            url = f"https://pypi.org/simple/{name}/"
+        else:
+            url = "https://registry.npmjs.org/" + name.replace("/", "%2F")
+        for attempt in range(2):   # one retry for a network blip
+            try:
+                # Only the status matters: stream so popular packages' multi-MB metadata isn't downloaded.
+                with requests.get(url, timeout=8, stream=True,
+                                  headers={"Accept": "application/vnd.npm.install-v1+json"}) as resp:
+                    if resp.status_code == 404:
+                        result = False
+                    elif resp.status_code == 200:
+                        result = True
+                break
+            except requests.RequestException as e:
+                logger.debug("Registry lookup failed for %s (attempt %d): %s", name, attempt + 1, e)
         self._registry_cache[key] = result
         return result
 
@@ -455,7 +459,7 @@ def _js_imports(ctx: FileContext, index: DependencyIndex) -> list[tuple[str, str
     """Classify bare-specifier imports in a JS/TS file."""
     seen: set[str] = set()
     results = []
-    for match in _JS_IMPORT.finditer(ctx.text):
+    for match in _JS_IMPORT.finditer(ctx.code_text):
         line = ctx.line_of(match.start(1))
         if ctx.is_comment(line):
             continue
