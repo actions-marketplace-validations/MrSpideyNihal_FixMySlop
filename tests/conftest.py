@@ -7,6 +7,12 @@ from fixmyslop.core.issue import Issue, ScanReport
 from fixmyslop.macros import SEVERITY_HIGH, SEVERITY_MEDIUM, CATEGORY_SECURITY, CATEGORY_AI_SMELL
 
 
+@pytest.fixture(autouse=True)
+def _no_update_check(monkeypatch):
+    """Tests never call PyPI; test_update_check.py turns the check back on where it needs to."""
+    monkeypatch.setenv("FIXMYSLOP_NO_UPDATE_CHECK", "1")
+
+
 @pytest.fixture
 def temp_repo(tmp_path):
     """Create a temporary repository with sample files for testing."""

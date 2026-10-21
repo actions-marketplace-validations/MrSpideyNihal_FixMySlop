@@ -261,7 +261,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: MrSpideyNihal/FixMySlop@v0.6.7
+      - uses: MrSpideyNihal/FixMySlop@v0.6.8
         with: { fail-on: high, changed-only: true }
 ```
 
@@ -270,7 +270,7 @@ Findings show up as inline PR annotations (SARIF). Also on the [GitHub Marketpla
 ```yaml
 repos:
   - repo: https://github.com/MrSpideyNihal/FixMySlop
-    rev: v0.6.7
+    rev: v0.6.8
     hooks: [{ id: fixmyslop }]
 ```
 
@@ -288,6 +288,11 @@ hook: { min_severity: MEDIUM }
 
 Silence one finding with a reason: `// fixmyslop-ignore[ui/gradient-text] brand guideline`.
 Skip a file: `fixmyslop-ignore-file` in its first lines. Paths passed explicitly are always scanned.
+
+**Updates.** `fixmyslop scan` (text output), `fixmyslop version` and the app tell you when a newer version is on
+PyPI, at most once a day. Nothing is installed for you. The check is skipped in CI and in machine-readable output
+(`-f json`, `compact`, the pre-commit hook), and `FIXMYSLOP_NO_UPDATE_CHECK=1` turns it off. `npx`, `uvx` and the
+website always run the latest version; pip, pre-commit and the GitHub Action stay pinned until you upgrade.
 
 ## Output formats
 

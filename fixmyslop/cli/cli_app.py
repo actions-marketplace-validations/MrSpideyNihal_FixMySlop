@@ -232,8 +232,11 @@ def scan(
         raise typer.Exit(2)
 
     text_mode = fmt == REPORT_FORMAT_TEXT
+    pending_update = None
     if text_mode:
         print_banner(APP_NAME, APP_VERSION)
+        from fixmyslop.utils import update_check
+        pending_update = update_check.start()                # PyPI check in the background, once a day
 
     client = None
     if llm and not no_llm:
@@ -280,6 +283,7 @@ def scan(
         target = " ".join(paths) if paths else "."
         print_slop_report(report, rel, limit=limit, fixable_count=len(fixable(report.issues)),
                           agent_hint=AGENTS[agent_key].name if agent_key else "", target=target)
+        _print_update_notice(pending_update(1.0) if pending_update else None)
     elif not save:
         sys.stdout.write(ReportBuilder().export(report, fmt))
         sys.stdout.write("\n")
@@ -720,8 +724,18 @@ def gui(
 
 @app.command()
 def version():
-    """Show FixMySlop version."""
+    """Show FixMySlop version (and whether a newer one is out)."""
+    from fixmyslop.utils import update_check
     typer.echo(f"{APP_NAME} v{APP_VERSION}")
+    _print_update_notice(update_check.available_update())
+
+
+def _print_update_notice(latest: Optional[str]) -> None:
+    """One dim line when a newer version is on PyPI (set FIXMYSLOP_NO_UPDATE_CHECK=1 to turn off)."""
+    if latest:
+        from rich.markup import escape
+        from fixmyslop.utils import update_check
+        console.print(f"[dim]{escape(update_check.notice(latest))}[/dim]")
 
 
 # Kept for backwards compatibility with code importing the old helper.

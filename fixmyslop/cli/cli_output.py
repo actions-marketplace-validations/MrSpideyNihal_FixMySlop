@@ -293,7 +293,8 @@ def print_slop_report(report, relpath, limit: int = 60, fixable_count: int = 0,
     summary.append(f"{report.slop_score:g}/100 ", style=grade_style)
     summary.append(f" grade {report.grade or '-'}", style=grade_style)
     summary.append(
-        f"   {len(report.issues)} issues · {report.scanned_files} files · "
+        f"   {len(report.issues)} issue{'' if len(report.issues) == 1 else 's'} · "
+        f"{report.scanned_files} file{'' if report.scanned_files == 1 else 's'} · "
         f"{report.lines_scanned:,} lines · {report.scan_time_s:.2f}s"
         + (f" · {report.baselined} pre-existing hidden by baseline" if getattr(report, "baselined", 0) else ""),
         style="dim",

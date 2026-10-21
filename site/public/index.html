@@ -176,14 +176,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: MrSpideyNihal/FixMySlop@v0.6.7
+      - uses: MrSpideyNihal/FixMySlop@v0.6.8
         with: { fail-on: high, changed-only: true }</pre></div>
         </div>
         <div class="tabpanel" role="tabpanel" id="panel-hook" aria-labelledby="tab-hook" hidden>
           <p>Checks staged files before each commit.</p>
           <div class="code"><pre>repos:
   - repo: https://github.com/MrSpideyNihal/FixMySlop
-    rev: v0.6.7
+    rev: v0.6.8
     hooks: [{ id: fixmyslop }]</pre></div>
         </div>
       </div>

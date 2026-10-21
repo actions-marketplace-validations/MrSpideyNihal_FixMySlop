@@ -301,6 +301,8 @@ class UIApp:
     def __init__(self, root: Optional[Path] = None):
         self.state = UIState(root.resolve() if root else None)
         self.token = secrets.token_urlsafe(32)
+        from fixmyslop.utils import update_check
+        self._update = update_check.start()                    # PyPI check in the background, once a day
 
     def page(self) -> bytes:
         html = resources.files("fixmyslop.web").joinpath("app.html").read_text(encoding="utf-8")
@@ -335,6 +337,9 @@ class UIApp:
             return read_snippet(base, query.get("file", ""), int(query.get("line") or 1))
         if path == "/api/brief":
             return {"text": self._brief(query.get("file") or None)}
+        if path == "/api/update":
+            from fixmyslop.utils.update_check import UPGRADE_COMMAND
+            return {"latest": self._update(2.0), "current": APP_VERSION, "command": UPGRADE_COMMAND}
         if path == "/api/export":
             return self._export(query.get("fmt", ""))
         raise FileNotFoundError(path)

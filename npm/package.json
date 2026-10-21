@@ -1,6 +1,6 @@
 {
   "name": "fixmyslop",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "The slop linter for the AI-agent era: catch AI slop in UI and code in milliseconds, then let your agent fix it.",
   "bin": { "fixmyslop": "bin/fixmyslop.js" },
   "files": ["bin/", "README.md"],

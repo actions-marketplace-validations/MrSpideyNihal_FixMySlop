@@ -194,7 +194,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
     <button type="button" data-view="issues"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Issues<span class="count" id="navCount"></span></button>
     <button type="button" data-view="rules"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Rules</button>
     <button type="button" data-view="setup"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></svg>Setup</button>
-    <div class="foot">v__VERSION__</div>
+    <div class="foot" id="versionFoot">v__VERSION__</div>
   </nav>
   <main id="main" tabindex="-1"></main>
 </div>
@@ -226,7 +226,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
   const state = {
     view: "overview", project: null, recent: [], report: null, integrations: [], rules: null, baseline: false,
     scanning: false, selected: null, filters: { q: "", sev: new Set(SEVERITIES), cat: "", group: "file", file: "", rule: "" },
-    rulesDirty: false,
+    rulesDirty: false, update: null,
   };
   const $ = (id) => document.getElementById(id);
 
@@ -395,7 +395,26 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
     else if (!state.report) page = state.scanning ? viewScanning() : viewReady();
     else if (state.view === "issues") page = viewIssues();
     else page = viewOverview();
+    const banner = updateBanner();
+    if (banner) page.prepend(banner);
     main.replaceChildren(page);
+  }
+
+  // ── update notice (FIXMYSLOP_NO_UPDATE_CHECK=1 turns it off) ──
+  function updateBanner() {
+    const u = state.update;
+    let dismissed = null;
+    try { dismissed = localStorage.getItem("fms-dismissed-update"); } catch { /* storage unavailable */ }
+    if (!u || !u.latest || dismissed === u.latest) return null;
+    return h("div", { class: "banner", role: "status" },
+      h("span", {}, `FixMySlop ${u.latest} is available (you have ${u.current}). Run `, h("code", { text: u.command }),
+        " and restart the app."),
+      h("span", { class: "spacer" }),
+      h("button", { class: "btn small", type: "button", onclick: () => copy(u.command, "Update command copied") }, "Copy command"),
+      h("button", { class: "btn ghost small", type: "button", onclick: () => {
+        try { localStorage.setItem("fms-dismissed-update", u.latest); } catch { /* shown again next time */ }
+        render();
+      } }, "Dismiss"));
   }
 
   function viewWelcome() {
@@ -721,6 +740,12 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
       state.view = VIEWS.includes(location.hash.replace("#/", "")) ? location.hash.replace("#/", "") : "overview";
       renderStatus(); render();
       api("/api/rules").then((r) => { state.rules = r; }).catch(() => {});
+      api("/api/update").then((u) => {
+        if (!u.latest) return;
+        state.update = u;
+        $("versionFoot").textContent = `v${u.current} · ${u.latest} available`;
+        render();
+      }).catch(() => { /* offline: no notice */ });
       if (state.project && !state.report) scan();
     } catch (e) {
       $("main").replaceChildren(h("div", { class: "page empty" }, h("h1", { text: "Can't reach FixMySlop" }), h("p", { text: e.message })));

@@ -7,7 +7,7 @@ from pathlib import Path
 
 # ─── App Identity ───────────────────────────────────────────────────────────
 APP_NAME = "FixMySlop"
-APP_VERSION = "0.6.7"
+APP_VERSION = "0.6.8"
 APP_DESCRIPTION = "The slop linter for the AI-agent era. Catch it, then let your agent fix it."
 APP_AUTHOR = "Nihal Rodge"
 APP_LICENSE = "MIT"

@@ -32,6 +32,11 @@ def _scan_mode_summary(scan_mode: str) -> str:
     return "DEEP 🔍" if scan_mode == SCAN_MODE_DEEP else "TURBO ⚡"
 
 
+def _count(n: int, noun: str) -> str:
+    """'1 file', '3 files'."""
+    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
+
+
 def severity_sort_key(issue: Issue):
     """Sort by real severity order (not alphabetical), then file and line."""
     return (SEVERITY_RANK.get(issue.severity, 9), issue.file_path, issue.line_start)
@@ -121,8 +126,8 @@ class ReportBuilder:
         elif fmt == REPORT_FORMAT_SARIF:
             return to_sarif(report, lambda p: relative_path(report, p))
         elif fmt == "compact":
-            summary = (f"FixMySlop: {len(report.issues)} issues, slop score {report.slop_score:g}/100 "
-                       f"(grade {report.grade}), {report.scanned_files} files")
+            summary = (f"FixMySlop: {_count(len(report.issues), 'issue')}, slop score {report.slop_score:g}/100 "
+                       f"(grade {report.grade}), {_count(report.scanned_files, 'file')}")
             return summary + "\n" + compact_findings(report.issues, lambda p: relative_path(report, p))
         elif fmt == REPORT_FORMAT_PROMPT:
             return build_fix_brief(report.issues, lambda p: relative_path(report, p),

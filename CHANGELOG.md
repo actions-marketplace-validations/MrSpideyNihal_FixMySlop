@@ -3,6 +3,14 @@
 All notable changes. Versions follow [semantic versioning](https://semver.org/); while in 0.x, minor versions may
 include breaking changes.
 
+## 0.6.8
+
+- **"New version available" notice.** `fixmyslop scan`, `fixmyslop version` and the app (a dismissible banner)
+  say when a newer FixMySlop is on PyPI, with the upgrade command. At most one check a day, a 1.5 s timeout,
+  silent offline, skipped in CI and machine-readable output, off with `FIXMYSLOP_NO_UPDATE_CHECK=1`. It never
+  installs anything.
+- "1 file", not "1 files", in scan summaries.
+
 ## 0.6.7
 
 - FixMySlop no longer crashes where the home directory is read-only (serverless functions, read-only containers,
